@@ -51,14 +51,39 @@
   --font-mono: var(--font-mono);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: #000000;
   color: var(--foreground);
   font-family: var(--font-body);
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Prevent iOS zoom-on-focus (inputs with font-size < 16px trigger it) */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Safe-area support for notched phones */
+@supports (padding: max(0px)) {
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* Subtle CyberWolf grid pattern overlay */

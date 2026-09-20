@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { Shield, Settings, Save, Lock } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Save } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminHeader } from "@/components/admin-header";
 import { event } from "@/config/event";
 
 export default function AdminSettingsPage() {
@@ -21,25 +20,9 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
-      <header className="border-b border-white/10 bg-[#151515] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#E50914]/10 text-[#E50914] flex items-center justify-center border border-[#E50914]/20">
-            <Shield className="w-4 h-4" />
-          </div>
-          <span className="font-display font-extrabold text-sm tracking-wider text-white">
-            EVENT SETTINGS
-          </span>
-        </div>
+      <AdminHeader title="EVENT SETTINGS" />
 
-        <nav className="hidden md:flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-zinc-300">
-          <Link href="/admin/dashboard" className="hover:text-white">Dashboard</Link>
-          <Link href="/admin/registrations" className="hover:text-white">Registrations</Link>
-          <Link href="/admin/payments" className="hover:text-white">Payments Queue</Link>
-          <Link href="/admin/settings" className="text-[#E50914]">Settings</Link>
-        </nav>
-      </header>
-
-      <main className="flex-1 max-w-4xl w-full mx-auto p-6 space-y-6">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:p-6 space-y-6">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-white">Global Event Configuration</h1>
           <p className="text-xs text-zinc-400">Toggle registration status and customize announcement messages</p>
@@ -47,15 +30,15 @@ export default function AdminSettingsPage() {
 
         <Card variant="default" className="border-white/10 p-6 sm:p-8">
           <form onSubmit={handleSave} className="space-y-6">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-[#1E1E1E] border border-white/10">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between p-4 rounded-xl bg-[#1E1E1E] border border-white/10">
+              <div className="min-w-0">
                 <h3 className="font-display font-bold text-white text-base">Registration Gate Status</h3>
                 <p className="text-xs text-zinc-400">Allow or block new registration submissions on public portal</p>
               </div>
               <button
                 type="button"
                 onClick={() => setRegistrationOpen(!registrationOpen)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${
+                className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${
                   registrationOpen
                     ? "bg-emerald-600 text-white"
                     : "bg-[#E50914] text-white"

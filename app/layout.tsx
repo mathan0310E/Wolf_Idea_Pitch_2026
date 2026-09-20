@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -17,15 +17,41 @@ const monoFont = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#000000" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://work-1-kwadbbpmppcfyzku.prod-runtime.all-hands.dev/"),
+  applicationName: "WOLF IDEATHON 2026",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "WOLF IDEATHON 2026",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  manifest: "/manifest.webmanifest",
   title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
   description:
     "Official event registration and portal for WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
   keywords: ["WOLF IDEATHON 2026", "CyberWolf", "Hackathon", "Cybersecurity", "Ideathon"],
   icons: {
-    icon: "/cw-logo-circle.png",
-    shortcut: "/cw-logo-circle.png",
-    apple: "/cw-logo-circle.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
     title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
@@ -43,6 +69,10 @@ export const metadata: Metadata = {
     description:
       "WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
     images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -4,19 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Shield,
   Users,
   DollarSign,
   CheckCircle2,
-  Clock,
-  XCircle,
   FileText,
   Download,
-  Settings,
-  LogOut,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StatusChip } from "@/components/ui/status-chip";
+import { AdminHeader } from "@/components/admin-header";
 import { formatINR } from "@/config/event";
 import { Registration } from "@/lib/types";
 
@@ -101,42 +97,12 @@ export default function AdminDashboardPage() {
   const verifiedCount = registrations.filter((r) => r.paymentStatus === "VERIFIED" || r.paymentStatus === "CONFIRMED").length;
   const pendingCount = registrations.filter((r) => r.paymentStatus === "SUBMITTED" || r.paymentStatus === "PENDING").length;
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("wolf_admin_session");
-    router.push("/admin/login");
-  };
-
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
-      {/* Admin Navbar */}
-      <header className="border-b border-white/10 bg-[#151515] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#E50914]/10 text-[#E50914] flex items-center justify-center border border-[#E50914]/20">
-            <Shield className="w-4 h-4" />
-          </div>
-          <span className="font-display font-extrabold text-sm tracking-wider text-white">
-            WOLF ADMIN DASHBOARD
-          </span>
-        </div>
-
-        <nav className="hidden md:flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-zinc-300">
-          <Link href="/admin/dashboard" className="text-[#E50914]">Dashboard</Link>
-          <Link href="/admin/registrations" className="hover:text-white">Registrations</Link>
-          <Link href="/admin/payments" className="hover:text-white">Payments Queue</Link>
-          <Link href="/admin/settings" className="hover:text-white">Settings</Link>
-        </nav>
-
-        <button
-          onClick={handleLogout}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1E1E1E] hover:bg-white/10 text-xs text-zinc-300 border border-white/10"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Sign Out</span>
-        </button>
-      </header>
+      <AdminHeader title="WOLF ADMIN DASHBOARD" />
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-extrabold text-white">Metrics & Analytics</h1>

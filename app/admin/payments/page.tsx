@@ -2,33 +2,18 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Shield, Clock, CheckCircle2, XCircle, FileCheck } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, FileCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatusChip } from "@/components/ui/status-chip";
+import { AdminHeader } from "@/components/admin-header";
 import { formatINR } from "@/config/event";
 
 export default function AdminPaymentsQueuePage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
-      <header className="border-b border-white/10 bg-[#151515] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#E50914]/10 text-[#E50914] flex items-center justify-center border border-[#E50914]/20">
-            <Shield className="w-4 h-4" />
-          </div>
-          <span className="font-display font-extrabold text-sm tracking-wider text-white">
-            PAYMENT VERIFICATION QUEUE
-          </span>
-        </div>
+      <AdminHeader title="PAYMENT VERIFICATION QUEUE" />
 
-        <nav className="hidden md:flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-zinc-300">
-          <Link href="/admin/dashboard" className="hover:text-white">Dashboard</Link>
-          <Link href="/admin/registrations" className="hover:text-white">Registrations</Link>
-          <Link href="/admin/payments" className="text-[#E50914]">Payments Queue</Link>
-          <Link href="/admin/settings" className="hover:text-white">Settings</Link>
-        </nav>
-      </header>
-
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:p-6 space-y-6">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-white">UPI Payment Verification Queue</h1>
           <p className="text-xs text-zinc-400">Review pending UTR and payment screenshot proofs</p>

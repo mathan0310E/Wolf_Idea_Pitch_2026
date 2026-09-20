@@ -62,6 +62,7 @@ export default function Home() {
             fill
             priority
             sizes="100vw"
+            quality={75}
             className="object-cover object-center opacity-70"
             style={{ objectPosition: "center top" }}
           />
@@ -95,15 +96,15 @@ export default function Home() {
                 <Link
                   href="/register"
                   style={{ backgroundColor: "#FF0007" }}
-                  className="inline-flex h-12 items-center justify-center rounded-none px-8 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition hover:opacity-90 active:scale-[0.98]"
+                  className="inline-flex min-h-12 items-center justify-center rounded-none px-5 sm:px-8 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-white transition hover:opacity-90 active:scale-[0.98] text-center whitespace-normal"
                 >
                   <span>Register Your Team</span>
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
                 </Link>
 
                 <Link
                   href="/status"
-                  className="inline-flex h-12 items-center justify-center rounded-none border border-white/40 bg-transparent px-8 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition hover:border-white hover:bg-white/10"
+                  className="inline-flex min-h-12 items-center justify-center rounded-none border border-white/40 bg-transparent px-5 sm:px-8 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-white transition hover:border-white hover:bg-white/10 text-center whitespace-normal"
                 >
                   <span>Check Registration Status</span>
                 </Link>

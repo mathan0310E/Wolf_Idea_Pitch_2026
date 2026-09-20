@@ -4,14 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Shield,
   Search,
   Filter,
   CheckCircle2,
   XCircle,
   Download,
   Eye,
-  LogOut,
   AlertCircle,
   FileCheck,
 } from "lucide-react";
@@ -19,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusChip } from "@/components/ui/status-chip";
+import { AdminHeader } from "@/components/admin-header";
 import { formatINR } from "@/config/event";
 import { Registration } from "@/lib/types";
 
@@ -154,25 +153,9 @@ export default function AdminRegistrationsPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
-      <header className="border-b border-white/10 bg-[#151515] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#E50914]/10 text-[#E50914] flex items-center justify-center border border-[#E50914]/20">
-            <Shield className="w-4 h-4" />
-          </div>
-          <span className="font-display font-extrabold text-sm tracking-wider text-white">
-            REGISTRATION MANAGEMENT
-          </span>
-        </div>
+      <AdminHeader title="REGISTRATION MANAGEMENT" />
 
-        <nav className="hidden md:flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-zinc-300">
-          <Link href="/admin/dashboard" className="hover:text-white">Dashboard</Link>
-          <Link href="/admin/registrations" className="text-[#E50914]">Registrations</Link>
-          <Link href="/admin/payments" className="hover:text-white">Payments Queue</Link>
-          <Link href="/admin/settings" className="hover:text-white">Settings</Link>
-        </nav>
-      </header>
-
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-extrabold text-white">Registrations Master List</h1>
