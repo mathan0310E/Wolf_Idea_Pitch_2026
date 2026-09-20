@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusChip } from "@/components/ui/status-chip";
 import { AdminHeader } from "@/components/admin-header";
-import { formatINR } from "@/config/event";
+import { formatINR, teamTypeLabel } from "@/config/event";
 import { Registration } from "@/lib/types";
 
 export default function AdminRegistrationsPage() {
@@ -196,9 +196,9 @@ export default function AdminRegistrationsPage() {
             onChange={(e) => setTypeFilter(e.target.value)}
             options={[
               { value: "ALL", label: "All Categories" },
-              { value: "individual", label: "Individual (1)" },
+              { value: "individual", label: "Solo (1)" },
               { value: "duo", label: "Duo (2)" },
-              { value: "square", label: "Square (4)" },
+              { value: "square", label: "Squad (4)" },
             ]}
           />
         </div>
@@ -228,7 +228,7 @@ export default function AdminRegistrationsPage() {
                       <div>{reg.members[0]?.name}</div>
                       <div className="text-[11px] text-zinc-400 font-mono">{reg.members[0]?.email}</div>
                     </td>
-                    <td className="p-4 uppercase">{reg.teamType} ({reg.memberCount})</td>
+                    <td className="p-4 uppercase">{teamTypeLabel(reg.teamType)} ({reg.memberCount})</td>
                     <td className="p-4 font-mono">{formatINR(reg.totalAmount)}</td>
                     <td className="p-4 font-mono">{reg.utr || "N/A"}</td>
                     <td className="p-4"><StatusChip status={reg.paymentStatus} /></td>
@@ -271,7 +271,7 @@ export default function AdminRegistrationsPage() {
                 <div className="grid grid-cols-2 gap-4 bg-[#1E1E1E] p-4 rounded-xl">
                   <div>
                     <span className="text-zinc-400 block">Category:</span>
-                    <span className="font-bold text-white uppercase">{selectedReg.teamType}</span>
+                    <span className="font-bold text-white uppercase">{teamTypeLabel(selectedReg.teamType)}</span>
                   </div>
                   <div>
                     <span className="text-zinc-400 block">Total Amount:</span>

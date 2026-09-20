@@ -5,7 +5,7 @@ import { CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 export default function RulesPage() {
   const rules = [
     "All team members must be enrolled in an educational institution.",
-    "Team sizes must adhere strictly to 1 member (Individual), 2 members (Duo), or 4 members (Square).",
+    "Team sizes must adhere strictly to 1 member (Solo), 2 members (Duo), or 4 members (Squad).",
     "Registration fee is flat ₹300 per participant (recalculated and enforced server-side).",
     "All submitted ideas and code must be original work created for WOLF IDEATHON 2026.",
     "Decisions made by the CyberWolf judging panel are final.",
