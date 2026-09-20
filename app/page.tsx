@@ -55,6 +55,18 @@ export default function Home() {
       <main className="flex-1">
         {/* HERO SECTION — CYBERWOLF 360 STYLE */}
         <section className="relative overflow-hidden bg-black text-white border-b border-white/10">
+          {/* Background image */}
+          <Image
+            src="/bg.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center opacity-60"
+            style={{ objectPosition: "center top" }}
+          />
+          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+
           <div className="absolute inset-0 bg-grid-cyberwolf opacity-30 pointer-events-none" />
 
           {/* Background glow */}
