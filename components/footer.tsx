@@ -13,11 +13,11 @@ export function Footer() {
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 flex-shrink-0">
                 <Image
-                  src="/cw-logo.png"
+                  src="/cw.jpeg"
                   alt="Cyber Wolf Logo"
                   width={36}
                   height={36}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain rounded-full"
                 />
               </div>
               <span className="font-display font-bold text-lg text-white">

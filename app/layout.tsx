@@ -22,6 +22,28 @@ export const metadata: Metadata = {
   description:
     "Official event registration and portal for WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
   keywords: ["WOLF IDEATHON 2026", "CyberWolf", "Hackathon", "Cybersecurity", "Ideathon"],
+  icons: {
+    icon: "/cw-logo-circle.png",
+    shortcut: "/cw-logo-circle.png",
+    apple: "/cw-logo-circle.png",
+  },
+  openGraph: {
+    title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
+    description:
+      "WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD. Register your team now.",
+    url: "/",
+    siteName: "WOLF IDEATHON 2026",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "WOLF IDEATHON 2026 — CyberWolf" }],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
+    description:
+      "WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({

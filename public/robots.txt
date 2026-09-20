@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+
+Sitemap: https://work-1-kwadbbpmppcfyzku.prod-runtime.all-hands.dev/sitemap.xml

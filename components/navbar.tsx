@@ -31,11 +31,11 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
           <div className="relative w-9 h-9 md:w-11 md:h-11 flex-shrink-0">
             <Image
-              src="/cw-logo.png"
+              src="/cw.jpeg"
               alt="Cyber Wolf Logo"
               width={44}
               height={44}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain rounded-full"
               priority
             />
           </div>

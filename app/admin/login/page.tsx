@@ -45,11 +45,11 @@ export default function AdminLoginPage() {
         <div className="text-center space-y-3">
           <div className="relative w-14 h-14 mx-auto flex items-center justify-center">
             <Image
-              src="/cw-logo.png"
+              src="/cw.jpeg"
               alt="Cyber Wolf Logo"
               width={56}
               height={56}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain rounded-full"
               priority
             />
           </div>
