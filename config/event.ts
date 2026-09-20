@@ -12,7 +12,7 @@ export const feePerMember = 300;
 export const teamTypes: TeamType[] = [
   {
     id: "individual",
-    label: "Individual",
+    label: "Solo",
     memberCount: 1,
     description: "Solo participant",
   },
@@ -24,7 +24,7 @@ export const teamTypes: TeamType[] = [
   },
   {
     id: "square",
-    label: "Square",
+    label: "Squad",
     memberCount: 4,
     description: "Team of four",
   },
@@ -32,6 +32,10 @@ export const teamTypes: TeamType[] = [
 
 export function getTeamType(teamTypeId: string): TeamType | undefined {
   return teamTypes.find((type) => type.id === teamTypeId);
+}
+
+export function teamTypeLabel(teamTypeId: TeamTypeId): string {
+  return getTeamType(teamTypeId)?.label ?? teamTypeId;
 }
 
 export function registrationFee(teamTypeId: TeamTypeId): number {

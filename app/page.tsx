@@ -33,11 +33,11 @@ export default function Home() {
     },
     {
       q: "Who can participate?",
-      a: "Students from any college, university, or technical institution can register individually or in teams of up to 4 members (Individual: 1, Duo: 2, Square: 4).",
+      a: "Students from any college, university, or technical institution can register individually or in teams of up to 4 members (Solo: 1, Duo: 2, Squad: 4).",
     },
     {
       q: "What is the registration fee model?",
-      a: "Registration is ₹300 per participant. Individual (1 member): ₹300, Duo (2 members): ₹600, Square (4 members): ₹1,200. Fees are verified automatically server-side.",
+      a: "Registration is ₹300 per participant. Solo (1 member): ₹300, Duo (2 members): ₹600, Squad (4 members): ₹1,200. Fees are verified automatically server-side.",
     },
     {
       q: "How does payment verification work?",
@@ -86,7 +86,15 @@ export default function Home() {
               </h1>
 
               <p className="font-display text-xl sm:text-2xl font-bold tracking-[0.18em] text-white/90 uppercase">
-                {event.tagline}
+                {event.tagline.split(" • ").map((word, i, { length }) => (
+                  <span
+                    key={word}
+                    className={i === length - 1 ? "font-serif italic font-normal normal-case text-[#FF0007]" : undefined}
+                  >
+                    {word}
+                    {i !== length - 1 && <span className="mx-1.5 opacity-50">•</span>}
+                  </span>
+                ))}
               </p>
 
               <p className="text-base sm:text-lg leading-relaxed text-white/80 max-w-2xl">
@@ -141,7 +149,7 @@ export default function Home() {
                   <CardDescription className="text-white/80 font-medium">Flat Fee Per Participant</CardDescription>
                 </CardHeader>
                 <CardContent className="text-xs text-white/60">
-                  Individual (₹300), Duo (₹600), Square (₹1,200). Enforced server-side.
+                  Solo (₹300), Duo (₹600), Squad (₹1,200). Enforced server-side.
                 </CardContent>
               </Card>
 
@@ -152,7 +160,7 @@ export default function Home() {
                   <CardDescription className="text-white/80 font-medium">Members Per Team</CardDescription>
                 </CardHeader>
                 <CardContent className="text-xs text-white/60">
-                  Flexible participation: Solo, Duo of 2, or Square team of 4 members.
+                  Flexible participation: Solo, Duo of 2, or Squad of 4 members.
                 </CardContent>
               </Card>
 

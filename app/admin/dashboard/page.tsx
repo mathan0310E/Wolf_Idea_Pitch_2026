@@ -13,7 +13,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { StatusChip } from "@/components/ui/status-chip";
 import { AdminHeader } from "@/components/admin-header";
-import { formatINR } from "@/config/event";
+import { formatINR, teamTypeLabel } from "@/config/event";
 import { Registration } from "@/lib/types";
 
 export default function AdminDashboardPage() {
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
                     <tr key={reg.registrationId} className="hover:bg-white/5 transition-colors">
                       <td className="p-4 font-mono font-bold text-[#E50914]">{reg.registrationId}</td>
                       <td className="p-4 font-bold text-white">{reg.teamName}</td>
-                      <td className="p-4 uppercase">{reg.teamType} ({reg.memberCount})</td>
+                      <td className="p-4 uppercase">{teamTypeLabel(reg.teamType)} ({reg.memberCount})</td>
                       <td className="p-4 font-mono">{formatINR(reg.totalAmount)}</td>
                       <td className="p-4"><StatusChip status={reg.paymentStatus} /></td>
                       <td className="p-4 text-zinc-400">{new Date(reg.createdAt).toLocaleDateString()}</td>

@@ -1,15 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Aleo, Host_Grotesk, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const displayFont = Space_Grotesk({
+const displayFont = Aleo({
   subsets: ["latin"],
+  weight: ["300", "400", "700"],
   variable: "--font-display",
 });
 
-const bodyFont = Inter({
+const bodyFont = Host_Grotesk({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-body",
+});
+
+const serifFont = Instrument_Serif({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
 });
 
 const monoFont = JetBrains_Mono({
@@ -84,7 +93,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} dark h-full antialiased`}
+      className={`${displayFont.variable} ${bodyFont.variable} ${serifFont.variable} ${monoFont.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0A0A0A] text-white font-sans selection:bg-[#E50914] selection:text-white">
         {children}

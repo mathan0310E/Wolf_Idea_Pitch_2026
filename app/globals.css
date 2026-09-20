@@ -21,9 +21,10 @@
   --input: rgba(255, 255, 255, 0.12);
   --ring: #FF0007;
   --radius: 0px;
-  --font-display: var(--font-display, 'Space Grotesk', 'Host Grotesk', sans-serif);
-  --font-body: var(--font-body, 'Inter', sans-serif);
-  --font-mono: var(--font-mono, 'JetBrains Mono', monospace);
+  --font-display: 'Aleo', 'Host Grotesk', sans-serif;
+  --font-body: 'Host Grotesk', sans-serif;
+  --font-serif: 'Instrument Serif', serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 @theme inline {
@@ -48,6 +49,7 @@
   --color-ring: var(--ring);
   --font-display: var(--font-display);
   --font-sans: var(--font-body);
+  --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
 }
 
