@@ -62,7 +62,7 @@ export default function Home() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-center opacity-60"
+            className="object-cover object-center opacity-70"
             style={{ objectPosition: "center top" }}
           />
           <div className="absolute inset-0 bg-black/60 pointer-events-none" />
