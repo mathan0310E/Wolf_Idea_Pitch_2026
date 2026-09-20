@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
+import { ClipButton } from "@/components/clip-button";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { event, teamTypes, formatINR } from "@/config/event";
@@ -93,14 +94,14 @@ export default function Home() {
               </p>
 
               <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3">
-                <Link
+                <ClipButton
                   href="/register"
-                  style={{ backgroundColor: "#FF0007" }}
-                  className="inline-flex min-h-12 items-center justify-center rounded-none px-5 sm:px-8 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] sm:tracking-[0.18em] text-white transition hover:opacity-90 active:scale-[0.98] text-center whitespace-normal"
+                  size="lg"
+                  className="min-h-12 sm:min-h-14"
                 >
                   <span>Register Your Team</span>
-                  <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
-                </Link>
+                  <ArrowRight className="w-4 h-4" />
+                </ClipButton>
 
                 <Link
                   href="/status"
@@ -391,14 +392,13 @@ export default function Home() {
               Secure your team registration for WOLF IDEATHON 2026 on 09 October 2026.
             </p>
             <div className="pt-4">
-              <Link
+              <ClipButton
                 href="/register"
-                style={{ backgroundColor: "#FF0007" }}
-                className="inline-flex h-12 items-center justify-center rounded-none px-8 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition hover:opacity-90"
+                size="lg"
               >
                 <span>Register Now</span>
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
+                <ArrowRight className="w-4 h-4" />
+              </ClipButton>
             </div>
           </div>
         </section>
