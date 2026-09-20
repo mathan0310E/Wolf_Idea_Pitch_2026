@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Registrations collection
+    match /registrations/{registrationId} {
+      // Public cannot write directly to registrations (gated via API route)
+      allow create, update, delete: if false;
+      
+      // Admin can read and write all registrations
+      allow read, write: if isAdmin();
+    }
+
+    // Payments collection
+    match /payments/{paymentId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Settings collection
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Audit logs collection
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Admin profiles
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

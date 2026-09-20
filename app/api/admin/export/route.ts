@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase-admin";
+import { sanitizeForCsv } from "@/lib/validation";
+import Papa from "papaparse";
+
+export async function GET(req: NextRequest) {
+  try {
+    const snapshot = await adminDb.collection("registrations").orderBy("createdAt", "desc").get();
+
+    const rows: Record<string, string>[] = [];
+
+    snapshot.docs.forEach((doc: any) => {
+      const data = doc.data();
+      const members = data.members || [];
+      const leader = members[0] || {};
+
+      rows.push({
+        "Registration ID": sanitizeForCsv(data.registrationId),
+        "Team Name": sanitizeForCsv(data.teamName),
+        Category: sanitizeForCsv(data.teamType),
+        "Member Count": sanitizeForCsv(data.memberCount),
+        Domain: sanitizeForCsv(data.domain),
+        "Total Fee (INR)": sanitizeForCsv(data.totalAmount),
+        "Payment Status": sanitizeForCsv(data.paymentStatus),
+        "Registration Status": sanitizeForCsv(data.registrationStatus),
+        "Transaction ID": sanitizeForCsv(data.transactionId),
+        UTR: sanitizeForCsv(data.utr),
+        "Leader Name": sanitizeForCsv(leader.name),
+        "Leader Email": sanitizeForCsv(leader.email),
+        "Leader Phone": sanitizeForCsv(leader.phone),
+        "Leader College": sanitizeForCsv(leader.college),
+        "Leader Roll No": sanitizeForCsv(leader.registerNumber),
+        "Created At": sanitizeForCsv(data.createdAt),
+      });
+    });
+
+    const csvContent = Papa.unparse(rows);
+
+    return new NextResponse(csvContent, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="wolf_ideathon_registrations_${Date.now()}.csv"`,
+      },
+    });
+  } catch (error: unknown) {
+    console.error("Export Error:", error);
+    return NextResponse.json({ error: "Failed to generate export file" }, { status: 500 });
+  }
+}
