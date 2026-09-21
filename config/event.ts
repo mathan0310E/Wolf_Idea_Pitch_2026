@@ -59,12 +59,13 @@ export const event = {
   shortName: "WOLF IDEATHON 2026",
   tagline: "LEARN • SECURE • BUILD",
   date: "2026-10-09",
-  venue: "[VENUE NAME]",
-  city: "[CITY]",
+  venue: "Cyber Wolf HQ",
+  city: "Tiruvannamalai, Tamil Nadu",
+  venueAddress: "No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu - 606601, India",
   contact: {
-    phone: "[CONTACT PHONE]",
-    email: "[CONTACT EMAIL]",
-    whatsapp: "[WHATSAPP LINK]",
+    phone: "+91 63798 69678",
+    email: "info@cyberwolf360.in",
+    whatsapp: "+91 78259 88139",
   },
   payment: {
     upiId: "[UPI ID]",
