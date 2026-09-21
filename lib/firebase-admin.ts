@@ -1,5 +1,5 @@
 import { getApps, initializeApp, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import { getStorage } from "firebase-admin/storage";
 
@@ -26,14 +26,31 @@ if (!getApps().length) {
       });
       isRealFirebase = true;
     }
-  } catch (error) {
+  } catch {
     console.warn("Firebase Admin operating in local mock store mode.");
   }
 }
 
+export function isFirebaseAdminReal(): boolean {
+  return isRealFirebase;
+}
+
 // In-memory mock store for dev / fallback when Firebase credentials are not provided
+type MockDocData = Record<string, unknown>;
+
+interface MockDocRef {
+  get: () => Promise<{ exists: boolean; data: () => MockDocData | undefined }>;
+  set: (data: MockDocData, options?: { merge?: boolean }) => Promise<void>;
+  update: (data: MockDocData) => Promise<void>;
+}
+
+interface MockTx {
+  get: () => Promise<{ exists: boolean; data: () => MockDocData }>;
+  set: (docRef: unknown, data: MockDocData) => void;
+}
+
 class MockFirestore {
-  private collections: Map<string, Map<string, any>> = new Map();
+  private collections: Map<string, Map<string, MockDocData>> = new Map();
   private sequence = 0;
 
   collection(name: string) {
@@ -42,29 +59,31 @@ class MockFirestore {
     }
     const store = this.collections.get(name)!;
 
-    return {
-      doc: (id: string) => ({
-        get: async () => {
-          const data = store.get(id);
-          return {
-            exists: !!data,
-            data: () => data,
-          };
-        },
-        set: async (data: any, options?: { merge?: boolean }) => {
-          if (options?.merge) {
-            const existing = store.get(id) || {};
-            store.set(id, { ...existing, ...data });
-          } else {
-            store.set(id, data);
-          }
-        },
-        update: async (data: any) => {
+    const doc = (id: string): MockDocRef => ({
+      get: async () => {
+        const data = store.get(id);
+        return {
+          exists: !!data,
+          data: () => data,
+        };
+      },
+      set: async (data: MockDocData, options?: { merge?: boolean }) => {
+        if (options?.merge) {
           const existing = store.get(id) || {};
           store.set(id, { ...existing, ...data });
-        },
-      }),
-      add: async (data: any) => {
+        } else {
+          store.set(id, data);
+        }
+      },
+      update: async (data: MockDocData) => {
+        const existing = store.get(id) || {};
+        store.set(id, { ...existing, ...data });
+      },
+    });
+
+    return {
+      doc,
+      add: async (data: MockDocData) => {
         const id = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
         store.set(id, data);
         return { id };
@@ -84,15 +103,18 @@ class MockFirestore {
     };
   }
 
-  async runTransaction(updateFunction: (transaction: any) => Promise<any>) {
+  async runTransaction<T>(updateFunction: (transaction: MockTx) => Promise<T>): Promise<T> {
     this.sequence += 1;
-    const fakeTransaction = {
+    const seq = this.sequence;
+    const fakeTransaction: MockTx = {
       get: async () => ({
         exists: true,
-        data: () => ({ currentSequence: this.sequence - 1 }),
+        data: () => ({ currentSequence: seq - 1 }),
       }),
-      set: (docRef: any, data: any) => {
-        this.sequence = data.currentSequence || this.sequence;
+      set: (_docRef: unknown, data: MockDocData) => {
+        if (typeof data.currentSequence === "number") {
+          this.sequence = data.currentSequence;
+        }
       },
     };
     return await updateFunction(fakeTransaction);
@@ -102,7 +124,7 @@ class MockFirestore {
 const mockStore = new MockFirestore();
 
 const mockAuth = {
-  verifyIdToken: async (token: string) => ({
+  verifyIdToken: async (_token: string) => ({
     uid: "admin-uid-123",
     role: "admin",
     email: "admin@cyberwolf.in",
@@ -111,12 +133,44 @@ const mockAuth = {
 
 const mockStorage = {
   bucket: () => ({
-    file: (path: string) => ({
+    file: (_path: string) => ({
       save: async () => {},
     }),
   }),
 };
 
-export const adminDb = isRealFirebase ? (getFirestore() as any) : (mockStore as any);
-export const adminAuth = isRealFirebase ? (getAuth() as any) : (mockAuth as any);
-export const adminStorage = isRealFirebase ? (getStorage() as any) : (mockStorage as any);
+type AdminDb = Firestore | MockFirestore;
+
+// Minimal transaction shim used by the submit route so the Admin SDK
+// Firestore type and the mock store type stay compatible.
+export type AdminTx = {
+  get: (ref: unknown) => Promise<{ exists: boolean; data: () => { currentSequence?: number } | undefined }>;
+  set: (ref: unknown, data: Record<string, unknown>, opts?: { merge?: boolean }) => void;
+};
+
+export const adminDb = (isRealFirebase
+  ? getFirestore()
+  : mockStore) as unknown as AdminDb & {
+  runTransaction: <T>(
+    fn: (tx: AdminTx) => Promise<T>
+  ) => Promise<T>;
+};
+export const adminAuth = (isRealFirebase ? getAuth() : mockAuth) as unknown as {
+  verifyIdToken: (token: string) => Promise<{ uid?: string; email?: string; role?: string }>;
+};
+export const adminStorage = (
+  isRealFirebase ? getStorage() : mockStorage
+) as unknown as {
+  bucket: () => {
+    file: (path: string) => {
+      save: (
+        buffer: Uint8Array,
+        options?: { metadata?: { contentType?: string } }
+      ) => Promise<void>;
+      getSignedUrl: (options: {
+        action: string;
+        expires: string;
+      }) => Promise<[string]>;
+    };
+  };
+};

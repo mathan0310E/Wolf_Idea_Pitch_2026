@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Shield, Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,13 +27,22 @@ export function AdminHeader({ title }: { title: string }) {
     }
   }, [mobileMenuOpen]);
 
+    // Close the mobile menu on route change
+  const prevPath = React.useRef(pathname);
   React.useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+    if (prevPath.current !== pathname) {
+      prevPath.current = pathname;
+      if (mobileMenuOpen) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- menu-close on navigation is intentional
+        setMobileMenuOpen(false);
+      }
+    }
+  });
 
+  const router = useRouter();
   const handleLogout = () => {
     sessionStorage.removeItem("wolf_admin_session");
-    window.location.href = "/admin/login";
+    router.push("/admin/login");
   };
 
   return (

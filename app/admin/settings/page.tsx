@@ -1,21 +1,81 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminHeader } from "@/components/admin-header";
 import { event } from "@/config/event";
 
+function adminToken(): string | null { try { return sessionStorage.getItem("wolf_admin_session"); } catch { return null; } }
+
 export default function AdminSettingsPage() {
+  const router = useRouter();
   const [registrationOpen, setRegistrationOpen] = React.useState(true);
   const [announcement, setAnnouncement] = React.useState<string>(event.registration.announcement);
   const [saved, setSaved] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [error, setError] = React.useState("");
 
-  const handleSave = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    const token = adminToken();
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/settings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401 || res.status === 403) {
+          sessionStorage.removeItem("wolf_admin_session");
+          router.push("/admin/login");
+          return;
+        }
+        const data = await res.json();
+        if (res.ok && data.settings) {
+          setRegistrationOpen(data.settings.open);
+          setAnnouncement(data.settings.announcement);
+        }
+      } catch {
+        // Keep config defaults on load failure
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [router]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    const token = adminToken();
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+    setIsSaving(true);
+    setError("");
+    setSaved(false);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ open: registrationOpen, announcement }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings.");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save settings.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -63,6 +123,12 @@ export default function AdminSettingsPage() {
               <div>UPI ID: <span className="font-mono text-zinc-400">{event.payment.upiId}</span></div>
             </div>
 
+            {error && (
+              <div className="p-3 rounded-lg bg-[#E50914]/10 border border-[#E50914]/30 text-xs text-[#E50914] font-medium">
+                {error}
+              </div>
+            )}
+
             {saved && (
               <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 font-medium">
                 ✓ Settings updated successfully.
@@ -71,10 +137,11 @@ export default function AdminSettingsPage() {
 
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#E50914] hover:bg-[#C10712] text-white font-bold text-xs uppercase tracking-wider shadow-md"
+              disabled={isSaving || isLoading}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#E50914] hover:bg-[#C10712] text-white font-bold text-xs uppercase tracking-wider shadow-md disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>Save Configuration</span>
+              <span>{isSaving ? "Saving..." : "Save Configuration"}</span>
             </button>
           </form>
         </Card>

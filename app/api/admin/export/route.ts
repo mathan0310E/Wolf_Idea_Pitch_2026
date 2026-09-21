@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin-auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { sanitizeForCsv } from "@/lib/validation";
 import Papa from "papaparse";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if ("error" in auth) return auth.error;
+
   try {
     const snapshot = await adminDb.collection("registrations").orderBy("createdAt", "desc").get();
 
     const rows: Record<string, string>[] = [];
 
-    snapshot.docs.forEach((doc: any) => {
+    snapshot.docs.forEach((doc) => {
       const data = doc.data();
-      const members = data.members || [];
-      const leader = members[0] || {};
+      const members = (data.members as Array<Record<string, unknown>>) || [];
+      const leader = (members[0] || {}) as Record<string, unknown>;
 
       rows.push({
         "Registration ID": sanitizeForCsv(data.registrationId),

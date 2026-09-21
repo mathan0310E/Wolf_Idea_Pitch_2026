@@ -1,7 +1,8 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Shield, Zap, Lock, Award } from "lucide-react";
+import { Shield, Zap } from "lucide-react";
 import { event } from "@/config/event";
+
 
 export default function AboutPage() {
   return (

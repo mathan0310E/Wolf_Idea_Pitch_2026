@@ -36,9 +36,8 @@ export function Navbar() {
   }, [mobileMenuOpen]);
 
   // Close the mobile menu on route change
-  React.useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+  const prevPath = React.useRef(pathname);
+  React.useEffect(() => { if (prevPath.current !== pathname) { prevPath.current = pathname; setMobileMenuOpen(false); } });
 
   return (
     <header className="sticky top-0 z-[100] isolate border-b border-white/10 bg-[#000000]">

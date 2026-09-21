@@ -1,25 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminDb } from "@/lib/firebase-admin";
+import { adminVerifySchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
-  try {
-    const authHeader = req.headers.get("authorization");
-    let actorUid = "system-admin";
+  const auth = await requireAdmin(req);
+  if ("error" in auth) return auth.error;
+  const actorUid = auth.admin.uid;
 
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const idToken = authHeader.split("Bearer ")[1];
-      try {
-        const decoded = await adminAuth.verifyIdToken(idToken);
-        actorUid = decoded.uid;
-      } catch {
-        // Fallback for demo admin authentication if configured
-      }
+  try {
+    const raw = await req.json();
+    const parsed = adminVerifySchema.safeParse(raw);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid verification parameters" },
+        { status: 400 }
+      );
     }
 
-    const { registrationId, status, rejectionReason } = await req.json();
+    const { registrationId, status, rejectionReason } = parsed.data;
 
-    if (!registrationId || !["VERIFIED", "CONFIRMED", "REJECTED"].includes(status)) {
-      return NextResponse.json({ error: "Invalid verification parameters" }, { status: 400 });
+    if (status === "REJECTED" && !rejectionReason?.trim()) {
+      return NextResponse.json(
+        { error: "A rejection reason is required to reject a submission." },
+        { status: 400 }
+      );
     }
 
     const regRef = adminDb.collection("registrations").doc(registrationId);

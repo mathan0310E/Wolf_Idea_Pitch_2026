@@ -51,6 +51,9 @@ function RegisterForm() {
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [gateOpen, setGateOpen] = React.useState<boolean | null>(null);
+  const [gateAnnouncement, setGateAnnouncement] = React.useState<string>('');
+  const [isUploading, setIsUploading] = React.useState(false);
   const [submissionResult, setSubmissionResult] = React.useState<{
     registrationId: string;
     lookupToken: string;
@@ -81,6 +84,7 @@ function RegisterForm() {
   }, []);
 
   React.useEffect(() => {
+    fetch('/api/admin/settings').then((r) => r.json()).then((d) => { if (d && d.settings) { setGateOpen(d.settings.open); setGateAnnouncement(d.settings.announcement || ''); } else { setGateOpen(true); } }).catch(() => setGateOpen(true));
     const typeParam = searchParams.get("type") as TeamTypeId;
     if (typeParam && ["individual", "duo", "square"].includes(typeParam)) {
       setTeamType(typeParam);
@@ -139,6 +143,23 @@ function RegisterForm() {
   )}&pn=${encodeURIComponent(
     event.payment.beneficiaryName
   )}&am=${totalFee}&cu=INR&tn=${encodeURIComponent(`WOLF IDEATHON 2026 - ${teamName || "Registration"}`)}`;
+
+  const handleScreenshot = async (file: File | null, base64Url: string) => {
+    if (!file || !base64Url) { setScreenshotUrl(''); return; }
+    setIsUploading(true);
+    try {
+      const res = await fetch('/api/uploads/screenshot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: file.name, dataUrl: base64Url }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Screenshot upload failed.');
+      setScreenshotUrl(data.url);
+      setErrors((prev) => { const next = { ...prev }; delete next.screenshotUrl; return next; });
+    } catch (err: unknown) {
+      setScreenshotUrl('');
+      setErrors((prev) => ({ ...prev, screenshotUrl: err instanceof Error ? err.message : 'Screenshot upload failed.' }));
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleMemberChange = (index: number, field: keyof Member, value: string | boolean) => {
     setMembers((prev) => {
@@ -246,6 +267,15 @@ function RegisterForm() {
       setTimeout(() => setCopiedToken(false), 2000);
     }
   };
+
+  if (gateOpen === false) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-4">
+        <h1 className="font-display text-3xl font-extrabold text-white">REGISTRATIONS <span className="text-[#E50914]">CLOSED</span></h1>
+        <p className="text-sm text-zinc-400">{gateAnnouncement || 'Registrations are currently closed. Please check back soon.'}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -594,7 +624,7 @@ function RegisterForm() {
 
               <FileDropzone
                 label="Payment Screenshot Proof"
-                onFileSelect={(file, base64) => setScreenshotUrl(base64)}
+                onFileSelect={handleScreenshot}
                 error={errors.screenshotUrl}
               />
 
@@ -712,7 +742,7 @@ function RegisterForm() {
             ) : (
               <button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading}
                 onClick={handleSubmitRegistration}
                 className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#E50914] hover:bg-[#C10712] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#E50914]/25 disabled:opacity-50"
               >

@@ -39,20 +39,24 @@ function StatusForm() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error fetching registration status.";
       setError(msg);
-    } finally {
+        } finally {
       setIsSearching(false);
-    }
+        }
   }, []);
 
+  const autoLookupDone = React.useRef(false);
   React.useEffect(() => {
-    const idParam = searchParams.get("id");
-    const tokenParam = searchParams.get("token");
+    if (autoLookupDone.current) return;
+    const params = new URLSearchParams(searchParams);
+    const idParam = params.get("id");
+    const tokenParam = params.get("token");
     if (idParam && tokenParam) {
-      setRegistrationId(idParam);
-      setLookupToken(tokenParam);
-      fetchStatus(idParam, tokenParam);
+      autoLookupDone.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initial URL param hydration only
+      void fetchStatus(idParam, tokenParam);
     }
-  }, [searchParams, fetchStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

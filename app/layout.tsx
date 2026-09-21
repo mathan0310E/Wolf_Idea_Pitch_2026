@@ -38,7 +38,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://work-1-kwadbbpmppcfyzku.prod-runtime.all-hands.dev/"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://wolf-ideathon-2026.vercel.app"
+  ),
   applicationName: "WOLF IDEATHON 2026",
   appleWebApp: {
     capable: true,

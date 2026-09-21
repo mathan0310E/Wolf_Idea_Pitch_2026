@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { statusLookupSchema } from "@/lib/validation";
 import { adminDb } from "@/lib/firebase-admin";
+import { clientKey, checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    if (!checkRateLimit(clientKey(req, "status"), 30, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many lookups. Please wait a minute and try again." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parseResult = statusLookupSchema.safeParse(body);
 

@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registrationFormSchema } from "@/lib/validation";
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, isFirebaseAdminReal, type AdminTx } from "@/lib/firebase-admin";
+import { clientKey, checkRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
+
+// ~1MB Firestore document ceiling: multi-MB inline data URLs must go through
+// /api/uploads/screenshot (Firebase Storage) instead.
+const MAX_INLINE_SCREENSHOT_CHARS = 900_000;
 
 export async function POST(req: NextRequest) {
   try {
+    if (!checkRateLimit(clientKey(req, "submit"), 15, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many submissions. Please wait a minute and try again." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
 
     // 1. Bot Honeypot Check
@@ -23,6 +35,41 @@ export async function POST(req: NextRequest) {
 
     const { teamType, teamName, domain, members, transactionId, utr, screenshotUrl } = parseResult.data;
 
+    // 2b. Registration gate — organizer-controlled, no redeploy needed
+    try {
+      const settingsDoc = await adminDb
+        .collection("settings")
+        .doc("event")
+        .get();
+      if (settingsDoc.exists && settingsDoc.data()?.open === false) {
+        return NextResponse.json(
+          {
+            error:
+              "Registrations are currently closed. Please check the announcement for updates.",
+          },
+          { status: 403 }
+        );
+      }
+    } catch {
+      // Fail open on gate read errors in dev/mock mode; Firestore rules
+      // remain the hard boundary in production.
+    }
+
+    // 2c. Inline screenshot guard — production Firestore docs cap at 1 MiB
+    if (
+      isFirebaseAdminReal() &&
+      screenshotUrl.startsWith("data:") &&
+      screenshotUrl.length > MAX_INLINE_SCREENSHOT_CHARS
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Payment screenshot is too large to submit inline. Please re-upload it (max 5MB) and try again.",
+        },
+        { status: 413 }
+      );
+    }
+
     // 3. Server-side trust boundary fee & member count recalculation
     const expectedMemberCount = teamType === "individual" ? 1 : teamType === "duo" ? 2 : 4;
     if (members.length !== expectedMemberCount) {
@@ -38,11 +85,12 @@ export async function POST(req: NextRequest) {
     let registrationId = "";
     const counterRef = adminDb.collection("settings").doc("sequence");
 
-    await adminDb.runTransaction(async (transaction: any) => {
+    await adminDb.runTransaction(async (transaction: AdminTx) => {
       const doc = await transaction.get(counterRef);
       let nextSeq = 1;
       if (doc.exists) {
-        nextSeq = (doc.data()?.currentSequence || 0) + 1;
+        const seq = doc.data()?.currentSequence;
+        if (typeof seq === "number") nextSeq = seq + 1;
       }
       transaction.set(counterRef, { currentSequence: nextSeq }, { merge: true });
       registrationId = `WOLF-2026-${String(nextSeq).padStart(5, "0")}`;

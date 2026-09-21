@@ -83,7 +83,7 @@ export const statusLookupSchema = z.object({
 
 export const adminVerifySchema = z.object({
   registrationId: z.string().min(1),
-  status: z.enum(["CONFIRMED", "REJECTED"]),
+  status: z.enum(["VERIFIED", "CONFIRMED", "REJECTED"]),
   rejectionReason: z.string().optional(),
 });
 

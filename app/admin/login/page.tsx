@@ -22,15 +22,21 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      sessionStorage.setItem("wolf_admin_session", "active");
-      router.push("/admin/dashboard");
-    } catch (err: unknown) {
-      if (email === "admin@cyberwolf.in" && password === "WolfAdmin2026!") {
-        sessionStorage.setItem("wolf_admin_session", "active");
-        router.push("/admin/dashboard");
+      // Firebase Auth is the ONLY credential path — no hardcoded fallback.
+      // The signed-in user must carry the `role: "admin"` custom claim;
+      // every /api/admin/* route re-verifies it server-side (see lib/admin-auth.ts).
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await cred.user.getIdToken();
+      const res = await cred.user.getIdTokenResult();
+      if ((res.claims as { role?: string }).role !== "admin") {
+        setError(
+          "This account is not an admin. Ask the organizer to grant the admin role (see FIREBASE_SETUP.md)."
+        );
         return;
       }
+      sessionStorage.setItem("wolf_admin_session", idToken);
+      router.push("/admin/dashboard");
+    } catch {
       setError("Invalid admin credentials or permission denied.");
     } finally {
       setIsLoading(false);

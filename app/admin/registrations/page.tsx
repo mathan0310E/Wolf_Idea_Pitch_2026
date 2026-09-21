@@ -1,25 +1,33 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Search,
-  Filter,
   CheckCircle2,
   XCircle,
   Download,
   Eye,
   AlertCircle,
-  FileCheck,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusChip } from "@/components/ui/status-chip";
 import { AdminHeader } from "@/components/admin-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatINR, teamTypeLabel } from "@/config/event";
 import { Registration } from "@/lib/types";
+
+function adminToken(): string | null {
+  try {
+    return sessionStorage.getItem("wolf_admin_session");
+  } catch {
+    return null;
+  }
+}
+
+const PAGE_SIZE = 20;
 
 export default function AdminRegistrationsPage() {
   const router = useRouter();
@@ -29,72 +37,69 @@ export default function AdminRegistrationsPage() {
   const [selectedReg, setSelectedReg] = React.useState<Registration | null>(null);
   const [rejectReason, setRejectReason] = React.useState("");
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState("");
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [registrations, setRegistrations] = React.useState<Registration[]>([]);
 
-  const [registrations, setRegistrations] = React.useState<Registration[]>([
-    {
-      registrationId: "WOLF-2026-00001",
-      lookupToken: "sampletoken1234567890abcdef",
-      teamName: "CyberSec Alpha",
-      teamType: "square",
-      memberCount: 4,
-      domain: "[THEME 1]",
-      totalAmount: 1200,
-      registrationStatus: "CONFIRMED",
-      paymentStatus: "VERIFIED",
-      transactionId: "TXN1001",
-      utr: "UTR98765432101",
-      screenshotUrl: "",
-      members: [
-        {
-          name: "Alex Vance",
-          email: "alex@example.com",
-          phone: "9876543210",
-          college: "Tech Institute",
-          department: "CSE",
-          year: "3",
-          registerNumber: "21CS001",
-          isTeamLeader: true,
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  const fetchRegistrations = React.useCallback(
+    async (opts?: { resetPage?: boolean }) => {
+      const token = adminToken();
+      if (!token) {
+        router.push("/admin/login");
+        return;
+      }
+      setIsLoading(true);
+      setLoadError("");
+      try {
+        const params = new URLSearchParams({
+          search,
+          status: statusFilter,
+          type: typeFilter,
+          page: String(opts?.resetPage ? 1 : page),
+          limit: String(PAGE_SIZE),
+        });
+        const res = await fetch(`/api/admin/registrations?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401 || res.status === 403) {
+          sessionStorage.removeItem("wolf_admin_session");
+          router.push("/admin/login");
+          return;
+        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load registrations.");
+        setRegistrations(data.registrations || []);
+        setTotalPages(data.totalPages ?? 1);
+        if (opts?.resetPage) setPage(1);
+      } catch (err: unknown) {
+        setLoadError(err instanceof Error ? err.message : "Failed to load registrations.");
+      } finally {
+        setIsLoading(false);
+      }
     },
-    {
-      registrationId: "WOLF-2026-00002",
-      lookupToken: "sampletoken9876543210fedcba",
-      teamName: "Solo Hacker",
-      teamType: "individual",
-      memberCount: 1,
-      domain: "[THEME 2]",
-      totalAmount: 300,
-      registrationStatus: "SUBMITTED",
-      paymentStatus: "SUBMITTED",
-      transactionId: "TXN1002",
-      utr: "UTR98765432102",
-      screenshotUrl: "",
-      members: [
-        {
-          name: "Sarah Lin",
-          email: "sarah@example.com",
-          phone: "9876543211",
-          college: "Cyber College",
-          department: "IT",
-          year: "2",
-          registerNumber: "22IT045",
-          isTeamLeader: true,
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+    [router, search, statusFilter, typeFilter, page]
+  );
 
   React.useEffect(() => {
-    const session = sessionStorage.getItem("wolf_admin_session");
-    if (!session) {
+    const token = adminToken();
+    if (!token) {
       router.push("/admin/login");
+      return;
     }
-  }, [router]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial admin table load from API
+    void fetchRegistrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, page]);
+
+  // Debounced server-side search/filter — resets to page 1 (tick avoids set-state-in-effect)
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- debounced server-side search
+    const t = setTimeout(() => { void fetchRegistrations({ resetPage: true }); }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter, typeFilter]);
 
   const handleVerify = async (regId: string, status: "VERIFIED" | "REJECTED") => {
     if (status === "REJECTED" && !rejectReason.trim()) {
@@ -102,11 +107,20 @@ export default function AdminRegistrationsPage() {
       return;
     }
 
+    const token = adminToken();
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const res = await fetch("/api/admin/verify", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           registrationId: regId,
           status,
@@ -114,14 +128,21 @@ export default function AdminRegistrationsPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Verification update failed");
+      if (res.status === 401 || res.status === 403) {
+        sessionStorage.removeItem("wolf_admin_session");
+        router.push("/admin/login");
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Verification update failed");
 
       setRegistrations((prev) =>
         prev.map((r) =>
           r.registrationId === regId
             ? {
                 ...r,
-                paymentStatus: status,
+                paymentStatus: status === "REJECTED" ? "REJECTED" : "VERIFIED",
                 registrationStatus: status === "REJECTED" ? "REJECTED" : "CONFIRMED",
                 rejectionReason: status === "REJECTED" ? rejectReason : undefined,
               }
@@ -131,25 +152,34 @@ export default function AdminRegistrationsPage() {
 
       setSelectedReg(null);
       setRejectReason("");
-    } catch (err) {
-      alert("Error updating status");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error updating status");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const filtered = registrations.filter((r) => {
-    const matchSearch =
-      r.registrationId.toLowerCase().includes(search.toLowerCase()) ||
-      r.teamName.toLowerCase().includes(search.toLowerCase()) ||
-      r.members.some((m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase())) ||
-      (r.utr && r.utr.toLowerCase().includes(search.toLowerCase()));
-
-    const matchStatus = statusFilter === "ALL" || r.paymentStatus === statusFilter;
-    const matchType = typeFilter === "ALL" || r.teamType === typeFilter;
-
-    return matchSearch && matchStatus && matchType;
-  });
+  const handleExport = async () => {
+    const token = adminToken();
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+    const res = await fetch("/api/admin/export", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      alert("Export failed. Please sign in again if your session expired.");
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `wolf_ideathon_registrations_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col">
@@ -162,14 +192,12 @@ export default function AdminRegistrationsPage() {
             <p className="text-xs text-zinc-400">Search, filter, verify, and export all team records</p>
           </div>
 
-          <a
-            href="/api/admin/export"
-            download
+          <button onClick={() => { void handleExport(); }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#E50914] hover:bg-[#C10712] text-white font-bold text-xs uppercase tracking-wider shadow-md"
           >
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
-          </a>
+          </button>
         </div>
 
         {/* Filters */}
@@ -185,8 +213,8 @@ export default function AdminRegistrationsPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
             options={[
               { value: "ALL", label: "All Payment Statuses" },
-              { value: "SUBMITTED", label: "Pending Verification" },
-              { value: "VERIFIED", label: "Verified" },
+              { value: "SUBMITTED", label: "Pending Verification" },              { value: "PENDING", label: "Payment Pending" },
+              { value: "VERIFIED", label: "Verified" },              { value: "CONFIRMED", label: "Confirmed" },
               { value: "REJECTED", label: "Rejected" },
             ]}
           />
@@ -205,6 +233,22 @@ export default function AdminRegistrationsPage() {
 
         {/* Table */}
         <Card variant="default" className="border-white/10 p-0 overflow-hidden">
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {[0,1,2,3].map((i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
+          ) : loadError ? (
+            <div className="p-8 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-[#E50914] mx-auto" />
+              <p className="text-sm text-white font-semibold">Failed to load registrations.</p>
+              <p className="text-xs text-zinc-400">{loadError}</p>
+              <button onClick={() => fetchRegistrations()} className="px-4 py-2 rounded-lg bg-[#1E1E1E] hover:bg-white/10 text-white text-xs font-bold border border-white/10">Retry</button>
+            </div>
+          ) : registrations.length === 0 ? (
+            <EmptyState title="No registrations found." description="Try clearing the search / filters, or wait for new team submissions." />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#1E1E1E] text-zinc-400 font-mono uppercase border-b border-white/10">
@@ -220,7 +264,7 @@ export default function AdminRegistrationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-zinc-300">
-                {filtered.map((reg) => (
+                {registrations.map((reg) => (
                   <tr key={reg.registrationId} className="hover:bg-white/5 transition-colors">
                     <td className="p-4 font-mono font-bold text-[#E50914]">{reg.registrationId}</td>
                     <td className="p-4 font-bold text-white">{reg.teamName}</td>
@@ -246,6 +290,7 @@ export default function AdminRegistrationsPage() {
               </tbody>
             </table>
           </div>
+          )}
         </Card>
 
         {/* Verification & Inspection Modal */}

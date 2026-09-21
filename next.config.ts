@@ -2,9 +2,9 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   turbopack: {
-    root: path.join(__dirname, ".."),
+    // Workspace root IS the project root here (no monorepo parent needed).
+    root: __dirname,
   },
 };
 
