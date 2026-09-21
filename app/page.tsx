@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   Shield,
   Calendar,
-  MapPin,
   Users,
   Award,
   Lock,
@@ -345,20 +344,24 @@ export default function Home() {
                     <span className="text-white/60 font-mono">{event.venue}</span>
                   </div>
                   <div className="p-4 bg-[#0F0F0F] border border-white/10">
-                    <span className="font-bold text-white block">City / Location:</span>
-                    <span className="text-white/60 font-mono">{event.city}</span>
+                    <span className="font-bold text-white block">Full Address:</span>
+                    <span className="text-white/60 font-mono">{event.venueAddress}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="border border-white/10 bg-[#0F0F0F] h-[350px] flex items-center justify-center text-center p-6 relative">
-                <div className="space-y-2">
-                  <MapPin className="w-10 h-10 text-[#FF0007] mx-auto animate-bounce" />
-                  <h4 className="font-bold text-white text-lg">[VENUE MAP EMBED]</h4>
-                  <p className="text-xs text-white/60 max-w-xs">
-                    Map embed placeholder. Coordinates will be populated when configured by organizer.
-                  </p>
-                </div>
+              <div className="border border-white/10 bg-[#0F0F0F] overflow-hidden relative">
+                <iframe
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(event.venueAddress)}&output=embed`}
+                  width="100%"
+                  height="350"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="WOLF IDEATHON 2026 venue map"
+                  className="w-full h-[350px]"
+                />
               </div>
             </div>
           </div>
