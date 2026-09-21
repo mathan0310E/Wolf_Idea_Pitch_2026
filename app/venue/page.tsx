@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { event } from "@/config/event";
-import { MapPin, Navigation, Phone } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 
 export default function VenuePage() {
   return (
@@ -29,18 +29,11 @@ export default function VenuePage() {
               </div>
               <div className="space-y-3 text-sm text-zinc-300">
                 <p><span className="font-bold text-white">Venue Name:</span> {event.venue}</p>
-                <p><span className="font-bold text-white">Address:</span> {event.venueAddress}</p>
+                <p><span className="font-bold text-white block">Full Address:</span></p>
+                <p className="pl-1 text-zinc-300">{event.venueAddress}</p>
                 <p><span className="font-bold text-white">City / Region:</span> {event.city}</p>
                 <p><span className="font-bold text-white">Contact Phone:</span> {event.contact.phone}</p>
                 <p><span className="font-bold text-white">Contact Email:</span> {event.contact.email}</p>
-              </div>
-            </div>
-
-            <div className="h-[300px] rounded-xl bg-[#151515] border border-white/10 flex items-center justify-center p-6 text-center">
-              <div className="space-y-2">
-                <Navigation className="w-10 h-10 text-[#E50914] mx-auto animate-bounce" />
-                <h4 className="font-bold text-white text-lg">Cyber Wolf HQ</h4>
-                <p className="text-xs text-zinc-400">No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu - 606601, India</p>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}
                   target="_blank"
@@ -51,6 +44,20 @@ export default function VenuePage() {
                   View on Google Maps
                 </a>
               </div>
+            </div>
+
+            <div className="rounded-xl bg-[#151515] border border-white/10 overflow-hidden">
+              <iframe
+                src={`https://www.google.com/maps?q=${encodeURIComponent(event.venueAddress)}&output=embed`}
+                width="100%"
+                height="380"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="WOLF IDEATHON 2026 venue map"
+                className="w-full h-[380px]"
+              />
             </div>
           </div>
         </div>
