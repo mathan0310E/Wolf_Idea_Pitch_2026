@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
               CYBER WOLF ADMIN
             </h1>
             <p className="text-xs text-white/60 font-mono mt-1">
-              WOLF IDEATHON 2026 • Security Area
+              WOLF IDEA PITCH 2026 • Security Area
             </p>
           </div>
         </div>

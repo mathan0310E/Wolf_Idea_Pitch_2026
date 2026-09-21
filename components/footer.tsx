@@ -55,7 +55,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/themes" className="hover:text-white transition-colors">
-                  Ideathon Themes
+                  Idea Pitch Themes
                 </Link>
               </li>
               <li>
@@ -138,7 +138,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/50">
-          <p>© 2026 Cyber Wolf. All rights reserved. WOLF IDEATHON 2026.</p>
+          <p>© 2026 Cyber Wolf. All rights reserved. WOLF IDEA PITCH 2026.</p>
           <p className="font-mono text-[11px]">
             Security • Compliance • Innovation
           </p>

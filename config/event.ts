@@ -55,8 +55,8 @@ export function formatINR(amount: number): string {
 }
 
 export const event = {
-  name: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
-  shortName: "WOLF IDEATHON 2026",
+  name: "CYBERWOLF PRESENTS — WOLF IDEA PITCH 2026",
+  shortName: "WOLF IDEA PITCH 2026",
   tagline: "LEARN • SECURE • BUILD",
   date: "2026-10-09",
   venue: "[VENUE NAME]",

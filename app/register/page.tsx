@@ -142,7 +142,7 @@ function RegisterForm() {
     event.payment.upiId
   )}&pn=${encodeURIComponent(
     event.payment.beneficiaryName
-  )}&am=${totalFee}&cu=INR&tn=${encodeURIComponent(`WOLF IDEATHON 2026 - ${teamName || "Registration"}`)}`;
+  )}&am=${totalFee}&cu=INR&tn=${encodeURIComponent(`WOLF IDEA PITCH 2026 - ${teamName || "Registration"}`)}`;
 
   const handleScreenshot = async (file: File | null, base64Url: string) => {
     if (!file || !base64Url) { setScreenshotUrl(''); return; }
@@ -284,7 +284,7 @@ function RegisterForm() {
           EVENT <span className="text-[#E50914]">REGISTRATION</span>
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400">
-          WOLF IDEATHON 2026 — 09 October 2026 — Fee: ₹300 / participant
+          WOLF IDEA PITCH 2026 — 09 October 2026 — Fee: ₹300 / participant
         </p>
       </div>
 
@@ -342,7 +342,7 @@ function RegisterForm() {
             <div className="space-y-1">
               <h2 className="font-display text-2xl font-bold text-white">Team & Domain Information</h2>
               <p className="text-xs text-zinc-400">
-                Provide your team name and select your preferred ideathon theme domain.
+                Provide your team name and select your preferred idea pitch theme domain.
               </p>
             </div>
 
@@ -357,7 +357,7 @@ function RegisterForm() {
               />
 
               <Select
-                label="Ideathon Domain / Theme"
+                label="Idea Pitch Domain / Theme"
                 required
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
@@ -647,7 +647,7 @@ function RegisterForm() {
                   className="mt-1 accent-[#E50914] w-4 h-4 rounded cursor-pointer"
                 />
                 <label htmlFor="terms" className="text-xs text-zinc-300 cursor-pointer select-none">
-                  I certify that all details provided are accurate, and I agree to the rules and payment verification policy of WOLF IDEATHON 2026.
+                  I certify that all details provided are accurate, and I agree to the rules and payment verification policy of WOLF IDEA PITCH 2026.
                 </label>
               </div>
               {errors.termsAccepted && (

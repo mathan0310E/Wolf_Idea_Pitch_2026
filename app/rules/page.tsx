@@ -7,7 +7,7 @@ export default function RulesPage() {
     "All team members must be enrolled in an educational institution.",
     "Team sizes must adhere strictly to 1 member (Solo), 2 members (Duo), or 4 members (Squad).",
     "Registration fee is flat ₹300 per participant (recalculated and enforced server-side).",
-    "All submitted ideas and code must be original work created for WOLF IDEATHON 2026.",
+    "All submitted ideas and code must be original work created for WOLF IDEA PITCH 2026.",
     "Decisions made by the CyberWolf judging panel are final.",
     "Payment verification requires submitting a valid UTR/Transaction ID and clear screenshot proof.",
   ];

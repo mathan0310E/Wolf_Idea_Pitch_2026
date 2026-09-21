@@ -39,22 +39,22 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://wolf-ideathon-2026.vercel.app"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://wolf-idea-pitch-2026.vercel.app"
   ),
-  applicationName: "WOLF IDEATHON 2026",
+  applicationName: "WOLF IDEA PITCH 2026",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "WOLF IDEATHON 2026",
+    title: "WOLF IDEA PITCH 2026",
   },
   formatDetection: {
     telephone: false,
   },
   manifest: "/manifest.webmanifest",
-  title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
+  title: "CYBERWOLF PRESENTS — WOLF IDEA PITCH 2026",
   description:
-    "Official event registration and portal for WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
-  keywords: ["WOLF IDEATHON 2026", "CyberWolf", "Hackathon", "Cybersecurity", "Ideathon"],
+    "Official event registration and portal for WOLF IDEA PITCH 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
+  keywords: ["WOLF IDEA PITCH 2026", "CyberWolf", "Hackathon", "Cybersecurity", "Idea Pitch"],
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -65,20 +65,20 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
+    title: "CYBERWOLF PRESENTS — WOLF IDEA PITCH 2026",
     description:
-      "WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD. Register your team now.",
+      "WOLF IDEA PITCH 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD. Register your team now.",
     url: "/",
-    siteName: "WOLF IDEATHON 2026",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "WOLF IDEATHON 2026 — CyberWolf" }],
+    siteName: "WOLF IDEA PITCH 2026",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "WOLF IDEA PITCH 2026 — CyberWolf" }],
     locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CYBERWOLF PRESENTS — WOLF IDEATHON 2026",
+    title: "CYBERWOLF PRESENTS — WOLF IDEA PITCH 2026",
     description:
-      "WOLF IDEATHON 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
+      "WOLF IDEA PITCH 2026 by CyberWolf on 09 October 2026. LEARN • SECURE • BUILD.",
     images: ["/og-image.png"],
   },
   robots: {

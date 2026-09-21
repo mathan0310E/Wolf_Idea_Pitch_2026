@@ -28,8 +28,8 @@ export default function Home() {
 
   const faqs = [
     {
-      q: "What is WOLF IDEATHON 2026?",
-      a: "WOLF IDEATHON 2026 is an upcoming cybersecurity and technology ideathon organized by Cyber Wolf on 09 October 2026. Participants innovate, design, and present solutions around the core pillars: LEARN, SECURE, BUILD.",
+      q: "What is WOLF IDEA PITCH 2026?",
+      a: "WOLF IDEA PITCH 2026 is an upcoming cybersecurity and technology idea pitch organized by Cyber Wolf on 09 October 2026. Participants innovate, design, and present solutions around the core pillars: LEARN, SECURE, BUILD.",
     },
     {
       q: "Who can participate?",
@@ -82,7 +82,7 @@ export default function Home() {
               </p>
 
               <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.05]">
-                WOLF IDEATHON <span className="text-[#FF0007]">2026</span>
+                WOLF IDEA PITCH <span className="text-[#FF0007]">2026</span>
               </h1>
 
               <p className="font-display text-xl sm:text-2xl font-bold tracking-[0.18em] text-white/90 uppercase">
@@ -98,7 +98,7 @@ export default function Home() {
               </p>
 
               <p className="text-base sm:text-lg leading-relaxed text-white/80 max-w-2xl">
-                The flagship cybersecurity & innovation ideathon by Cyber Wolf. Build resilient architectures, tackle real-world vulnerability challenges, and pitch to industry experts on 09 October 2026.
+                The flagship cybersecurity & innovation idea pitch by Cyber Wolf. Build resilient architectures, tackle real-world vulnerability challenges, and pitch to industry experts on 09 October 2026.
               </p>
 
               <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3">
@@ -171,7 +171,7 @@ export default function Home() {
                   <CardDescription className="text-white/80 font-medium">Event Date 2026</CardDescription>
                 </CardHeader>
                 <CardContent className="text-xs text-white/60">
-                  Save the date for Cyber Wolf&apos;s annual flagship ideathon.
+                  Save the date for Cyber Wolf&apos;s annual flagship idea pitch.
                 </CardContent>
               </Card>
 
@@ -201,7 +201,7 @@ export default function Home() {
                 LEARN • SECURE • <span className="text-[#FF0007]">BUILD</span>
               </h2>
               <p className="mt-4 text-base text-white/70">
-                WOLF IDEATHON 2026 is designed to challenge security researchers, developers, and innovators across three core engineering disciplines.
+                WOLF IDEA PITCH 2026 is designed to challenge security researchers, developers, and innovators across three core engineering disciplines.
               </p>
             </div>
 
@@ -240,7 +240,7 @@ export default function Home() {
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 03</span>
                   <CardTitle className="text-2xl text-white">03. BUILD</CardTitle>
                   <CardDescription className="text-white/70">
-                    Transform conceptual ideathon proposals into functional prototypes and present them to Cyber Wolf mentors.
+                    Transform conceptual idea pitch proposals into functional prototypes and present them to Cyber Wolf mentors.
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -324,7 +324,7 @@ export default function Home() {
                   EVENT <span className="text-[#FF0007]">VENUE</span>
                 </h2>
                 <p className="text-white/70 text-sm leading-relaxed">
-                  Join Cyber Wolf live at the official venue for WOLF IDEATHON 2026. High-speed networking, collaborative hacking labs, and presentation areas provided.
+                  Join Cyber Wolf live at the official venue for WOLF IDEA PITCH 2026. High-speed networking, collaborative hacking labs, and presentation areas provided.
                 </p>
                 <div className="space-y-3 text-xs text-white/80">
                   <div className="p-4 bg-[#0F0F0F] border border-white/10">
@@ -397,7 +397,7 @@ export default function Home() {
               READY TO BUILD WITH <span className="text-[#FF0007]">CYBER WOLF</span>?
             </h2>
             <p className="text-white/70 text-sm sm:text-base max-w-2xl mx-auto">
-              Secure your team registration for WOLF IDEATHON 2026 on 09 October 2026.
+              Secure your team registration for WOLF IDEA PITCH 2026 on 09 October 2026.
             </p>
             <div className="pt-4">
               <ClipButton

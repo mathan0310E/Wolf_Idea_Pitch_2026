@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="wolf_ideathon_registrations_${Date.now()}.csv"`,
+        "Content-Disposition": `attachment; filename="wolf_idea_pitch_registrations_${Date.now()}.csv"`,
       },
     });
   } catch (error: unknown) {

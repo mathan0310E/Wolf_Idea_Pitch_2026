@@ -32,7 +32,7 @@ export default function CyberWolfPage() {
             </div>
 
             <p className="text-sm text-zinc-300 leading-relaxed">
-              CyberWolf is a technical community dedicated to advancing security awareness, ethical hacking, secure software development, and technical innovation. Through hackathons, ideathons, and workshops, CyberWolf provides a platform for students to demonstrate their engineering and security talent.
+              CyberWolf is a technical community dedicated to advancing security awareness, ethical hacking, secure software development, and technical innovation. Through hackathons, idea pitchs, and workshops, CyberWolf provides a platform for students to demonstrate their engineering and security talent.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/10">

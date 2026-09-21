@@ -17,7 +17,7 @@ export default function VenuePage() {
               EVENT <span className="text-[#E50914]">VENUE</span>
             </h1>
             <p className="text-zinc-400 text-sm max-w-2xl mx-auto">
-              WOLF IDEATHON 2026 venue details.
+              WOLF IDEA PITCH 2026 venue details.
             </p>
           </div>
 

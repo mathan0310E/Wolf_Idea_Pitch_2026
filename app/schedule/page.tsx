@@ -7,7 +7,7 @@ export default function SchedulePage() {
   const scheduleItems = [
     { time: "08:30 AM", title: "Reporting & Check-in", status: event.schedule.checkIn },
     { time: "09:30 AM", title: "Opening Ceremony & Briefing", status: event.schedule.opening },
-    { time: "10:00 AM", title: "Ideathon Hacking Begins", status: event.schedule.hackathonStart },
+    { time: "10:00 AM", title: "Idea Pitch Hacking Begins", status: event.schedule.hackathonStart },
     { time: "04:30 PM", title: "Final Pitch & Demonstration", status: event.schedule.hackathonEnd },
     { time: "05:30 PM", title: "Valedictory & Results", status: event.schedule.results },
   ];
@@ -25,7 +25,7 @@ export default function SchedulePage() {
               EVENT <span className="text-[#E50914]">SCHEDULE</span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base max-w-2xl mx-auto">
-              Timeline for WOLF IDEATHON 2026.
+              Timeline for WOLF IDEA PITCH 2026.
             </p>
           </div>
 

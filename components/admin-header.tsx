@@ -11,6 +11,7 @@ const adminNavItems = [
   { label: "Registrations", href: "/admin/registrations" },
   { label: "Payments Queue", href: "/admin/payments" },
   { label: "Settings", href: "/admin/settings" },
+  { label: "Audit Logs", href: "/admin/audit-logs" },
 ];
 
 export function AdminHeader({ title }: { title: string }) {

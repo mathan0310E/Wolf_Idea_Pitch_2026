@@ -1,4 +1,4 @@
-# Security Architecture & Best Practices — WOLF IDEATHON 2026
+# Security Architecture & Best Practices — WOLF IDEA PITCH 2026
 
 ## 1. Zero-Trust Server Boundary
 - **Client Amounts & Member Counts**: Client-submitted total amounts or registration IDs are **never trusted**. Server recalculates fee (`memberCount × ₹300`) and enforces strict member array length validation.

@@ -11,8 +11,8 @@ export default function FaqPage() {
 
   const faqs = [
     {
-      q: "What is WOLF IDEATHON 2026?",
-      a: "WOLF IDEATHON 2026 is an upcoming cybersecurity and technology ideathon organized by CyberWolf on 09 October 2026. Participants innovate, design, and present solutions around the core pillars: LEARN, SECURE, BUILD.",
+      q: "What is WOLF IDEA PITCH 2026?",
+      a: "WOLF IDEA PITCH 2026 is an upcoming cybersecurity and technology idea pitch organized by CyberWolf on 09 October 2026. Participants innovate, design, and present solutions around the core pillars: LEARN, SECURE, BUILD.",
     },
     {
       q: "Who can participate?",
@@ -49,7 +49,7 @@ export default function FaqPage() {
               FREQUENTLY ASKED <span className="text-[#E50914]">QUESTIONS</span>
             </h1>
             <p className="text-zinc-400 text-sm max-w-2xl mx-auto">
-              Everything you need to know about WOLF IDEATHON 2026.
+              Everything you need to know about WOLF IDEA PITCH 2026.
             </p>
           </div>
 

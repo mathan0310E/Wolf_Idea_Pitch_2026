@@ -15,7 +15,7 @@ export default function AboutPage() {
               ABOUT THE EVENT
             </div>
             <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white">
-              ABOUT <span className="text-[#E50914]">WOLF IDEATHON 2026</span>
+              ABOUT <span className="text-[#E50914]">WOLF IDEA PITCH 2026</span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base max-w-2xl mx-auto">
               Presented by CyberWolf on 09 October 2026. Tagline: {event.tagline}
@@ -27,7 +27,7 @@ export default function AboutPage() {
               <Shield className="w-10 h-10 text-[#E50914]" />
               <h3 className="font-display text-2xl font-bold text-white">Our Mission</h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                WOLF IDEATHON 2026 aims to foster innovative problem-solving in cybersecurity, threat mitigation, secure systems engineering, and resilient cloud/software architectures.
+                WOLF IDEA PITCH 2026 aims to foster innovative problem-solving in cybersecurity, threat mitigation, secure systems engineering, and resilient cloud/software architectures.
               </p>
             </div>
 

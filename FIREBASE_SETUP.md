@@ -1,7 +1,7 @@
-# Firebase Setup Guide — WOLF IDEATHON 2026
+# Firebase Setup Guide — WOLF IDEA PITCH 2026
 
 ## 1. Create Firebase Project
-1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project named `wolf-ideathon-2026`.
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project named `wolf-idea-pitch-2026`.
 2. Register a Web App to get `apiKey`, `authDomain`, `projectId`, `storageBucket`, etc.
 3. Copy `.env.example` to `.env.local` and fill in the values (never commit `.env.local`).
 4. Set `NEXT_PUBLIC_SITE_URL` to the production URL (used for SEO metadata).

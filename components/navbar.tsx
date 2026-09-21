@@ -59,7 +59,7 @@ export function Navbar() {
               Cyber Wolf
             </span>
             <span className="hidden min-[400px]:block text-[9px] font-bold tracking-[0.2em] text-white/60 uppercase">
-              WOLF IDEATHON 2026
+              WOLF IDEA PITCH 2026
             </span>
           </div>
         </Link>

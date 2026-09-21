@@ -1,10 +1,10 @@
-# MASTER PROMPT — WOLF IDEATHON 2026 (CyberWolf)
+# MASTER PROMPT — WOLF IDEA PITCH 2026 (CyberWolf)
 
 You are a senior full-stack engineer, UI/UX designer, Firebase architect, and security engineer.
 
 Build a **complete, production-ready, secure** event registration platform for:
 
-> **CYBERWOLF PRESENTS — WOLF IDEATHON 2026**
+> **CYBERWOLF PRESENTS — WOLF IDEA PITCH 2026**
 > Tagline: **LEARN • SECURE • BUILD**
 > Date: **09 October 2026**
 
@@ -56,7 +56,7 @@ Goal: premium, minimal, technology-forward — a real event platform, not a gami
 
 **Core UI components to build once, reuse everywhere:** `Button` (primary/secondary/ghost/destructive), `Card`, `StepIndicator`, `Badge/StatusChip`, `Input/Select/Textarea` with inline error state, `FileDropzone` (with preview + progress), `DataTable` (sort/filter/paginate), `Toast`, `EmptyState`, `Skeleton`.
 
-**Homepage structure:** Navbar → Hero (CyberWolf presents / Wolf Ideathon 2026 / tagline / date / venue / Register CTA) → Event highlights (4 stat cards) → About → Learn/Secure/Build cards → About CyberWolf → Venue (with real map embed) → Team formation → Process timeline → Themes → Schedule → FAQ accordion → Final CTA → Footer.
+**Homepage structure:** Navbar → Hero (CyberWolf presents / Wolf Idea Pitch 2026 / tagline / date / venue / Register CTA) → Event highlights (4 stat cards) → About → Learn/Secure/Build cards → About CyberWolf → Venue (with real map embed) → Team formation → Process timeline → Themes → Schedule → FAQ accordion → Final CTA → Footer.
 
 **Registration wizard steps:** Team Selection → Team Info → Member Info (dynamic count) → Review → Payment → Payment Verification → Confirmation, with a persistent step indicator and back-navigation that preserves entered data (session-persisted, not lost on refresh).
 
@@ -232,7 +232,7 @@ Verify existing functionality after each stage before moving on. No mock data st
 
 ## 13. NON-NEGOTIABLES
 
-1. Organizer: CyberWolf. Event: WOLF IDEATHON 2026. Date: 09 Oct 2026. Tagline: LEARN • SECURE • BUILD.
+1. Organizer: CyberWolf. Event: WOLF IDEA PITCH 2026. Date: 09 Oct 2026. Tagline: LEARN • SECURE • BUILD.
 2. Palette: Black `#0A0A0A` / Red `#E50914` / White — red used sparingly, as signal not fill.
 3. Individual ₹300 (1) / Duo ₹600 (2) / Square ₹1,200 (4) — fee always `members × 300`, always recalculated server-side.
 4. Every member fills the full form; Member 1 = Team Leader, same fields as all.

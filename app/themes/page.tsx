@@ -19,7 +19,7 @@ export default function ThemesPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#1E1E1E] text-xs font-mono text-[#E50914] border border-white/10">
-              IDEATHON DOMAINS
+              IDEA PITCH DOMAINS
             </div>
             <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-white">
               EVENT <span className="text-[#E50914]">THEMES</span>

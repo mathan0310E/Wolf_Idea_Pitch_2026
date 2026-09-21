@@ -1,7 +1,7 @@
 {
-  "name": "WOLF IDEATHON 2026 — CyberWolf",
-  "short_name": "Wolf Ideathon",
-  "description": "Official event registration and portal for WOLF IDEATHON 2026 by CyberWolf. LEARN • SECURE • BUILD.",
+  "name": "WOLF IDEA PITCH 2026 — CyberWolf",
+  "short_name": "Wolf Idea Pitch",
+  "description": "Official event registration and portal for WOLF IDEA PITCH 2026 by CyberWolf. LEARN • SECURE • BUILD.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

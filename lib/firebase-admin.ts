@@ -14,7 +14,7 @@ if (!getApps().length) {
     const projectId =
       process.env.FIREBASE_ADMIN_PROJECT_ID ||
       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-      "wolf-ideathon-2026";
+      "wolf-idea-pitch-2026";
 
     if (privateKey && clientEmail && !privateKey.includes("YourFirebaseKey")) {
       initializeApp({
