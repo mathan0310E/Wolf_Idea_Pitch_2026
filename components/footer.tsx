@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, MapPin, Lock } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import { event } from "@/config/event";
 
 export function Footer() {
@@ -123,15 +123,6 @@ export function Footer() {
                 <Phone className="w-3.5 h-3.5 text-[#FF0007] flex-shrink-0" />
                 <span>{event.contact.phone}</span>
               </div>
-            </div>
-            <div className="pt-2">
-              <Link
-                href="/admin/login"
-                className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Admin Login Portal</span>
-              </Link>
             </div>
           </div>
         </div>

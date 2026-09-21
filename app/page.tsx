@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { ClipButton } from "@/components/clip-button";
+import { CountdownTimer } from "@/components/countdown-timer";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { event, teamTypes, formatINR } from "@/config/event";
@@ -117,6 +118,18 @@ export default function Home() {
                 >
                   <span>Check Registration Status</span>
                 </Link>
+              </div>
+
+              {/* LIVE COUNTDOWN */}
+              <div className="mt-8 sm:mt-10 flex flex-col items-center lg:items-start gap-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 flex items-center justify-center lg:justify-start gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF0007] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF0007]" />
+                  </span>
+                  HACKATHON LAUNCH COUNTDOWN
+                </p>
+                <CountdownTimer targetDate={event.date} />
               </div>
             </div>
           </div>
