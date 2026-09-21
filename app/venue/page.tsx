@@ -29,6 +29,7 @@ export default function VenuePage() {
               </div>
               <div className="space-y-3 text-sm text-zinc-300">
                 <p><span className="font-bold text-white">Venue Name:</span> {event.venue}</p>
+                <p><span className="font-bold text-white">Address:</span> {event.venueAddress}</p>
                 <p><span className="font-bold text-white">City / Region:</span> {event.city}</p>
                 <p><span className="font-bold text-white">Contact Phone:</span> {event.contact.phone}</p>
                 <p><span className="font-bold text-white">Contact Email:</span> {event.contact.email}</p>
@@ -38,8 +39,17 @@ export default function VenuePage() {
             <div className="h-[300px] rounded-xl bg-[#151515] border border-white/10 flex items-center justify-center p-6 text-center">
               <div className="space-y-2">
                 <Navigation className="w-10 h-10 text-[#E50914] mx-auto animate-bounce" />
-                <h4 className="font-bold text-white text-lg">[MAP EMBED PLACEHOLDER]</h4>
-                <p className="text-xs text-zinc-400">Interactive map will display here once venue coordinates are configured.</p>
+                <h4 className="font-bold text-white text-lg">Cyber Wolf HQ</h4>
+                <p className="text-xs text-zinc-400">No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu - 606601, India</p>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#E50914] hover:text-white transition-colors"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  View on Google Maps
+                </a>
               </div>
             </div>
           </div>
