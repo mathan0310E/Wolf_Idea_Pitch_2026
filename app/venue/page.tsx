@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { event } from "@/config/event";
-import { MapPin, Navigation, Phone } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 
 export default function VenuePage() {
   return (
@@ -69,6 +69,20 @@ export default function VenuePage() {
                   Directions
                 </a>
               </div>
+            </div>
+
+            <div className="rounded-xl bg-[#151515] border border-white/10 overflow-hidden">
+              <iframe
+                src={`https://www.google.com/maps?q=${encodeURIComponent(event.venueAddress)}&output=embed`}
+                width="100%"
+                height="380"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="WOLF IDEATHON 2026 venue map"
+                className="w-full h-[380px]"
+              />
             </div>
           </div>
         </div>

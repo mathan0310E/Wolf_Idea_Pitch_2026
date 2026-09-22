@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   Shield,
   Calendar,
-  MapPin,
   Users,
   Award,
   Lock,
@@ -15,6 +14,7 @@ import {
   CheckCircle2,
   ArrowRight,
   ChevronDown,
+  MapPin,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { ClipButton } from "@/components/clip-button";
@@ -345,8 +345,8 @@ export default function Home() {
                     <span className="text-white/60 font-mono">{event.venue}</span>
                   </div>
                   <div className="p-4 bg-[#0F0F0F] border border-white/10">
-                    <span className="font-bold text-white block">City / Location:</span>
-                    <span className="text-white/60 font-mono">{event.city}</span>
+                    <span className="font-bold text-white block">Full Address:</span>
+                    <span className="text-white/60 font-mono">{event.venueAddress}</span>
                   </div>
                   <div className="p-4 bg-[#0F0F0F] border border-white/10">
                     <span className="font-bold text-white block">Email:</span>
@@ -369,7 +369,7 @@ export default function Home() {
                 </div>
               </div>
 
-                            <div className="space-y-3">
+                <div className="space-y-3">
                 <div className="h-64 rounded-xl overflow-hidden border border-white/10 bg-[#111]">
                   <iframe
                     title={`Map — ${event.venue}, ${event.city}`}
