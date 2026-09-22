@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { event } from "@/config/event";
-import { MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation, Phone, Mail, Calendar } from "lucide-react";
 
 export default function VenuePage() {
   return (
@@ -27,13 +27,49 @@ export default function VenuePage() {
                 <MapPin className="w-8 h-8 text-[#E50914]" />
                 <h3 className="font-display text-2xl font-bold text-white">Venue Details</h3>
               </div>
-              <div className="space-y-3 text-sm text-zinc-300">
-                <p><span className="font-bold text-white">Venue Name:</span> {event.venue}</p>
-                <p><span className="font-bold text-white block">Full Address:</span></p>
-                <p className="pl-1 text-zinc-300">{event.venueAddress}</p>
-                <p><span className="font-bold text-white">City / Region:</span> {event.city}</p>
-                <p><span className="font-bold text-white">Contact Phone:</span> {event.contact.phone}</p>
-                <p><span className="font-bold text-white">Contact Email:</span> {event.contact.email}</p>
+              <div className="space-y-4 text-sm text-zinc-300">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-[#E50914] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white block">Venue</p>
+                    <p className="text-zinc-400">{event.venue}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Navigation className="w-5 h-5 text-[#E50914] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white block">Full Address</p>
+                    <p className="text-zinc-400">{event.venueAddress}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-[#E50914] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white block">Event Date</p>
+                    <p className="text-zinc-400">
+                      {new Date(event.date).toLocaleDateString("en-IN", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Phone className="w-5 h-5 text-[#E50914] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white block">Contact Phone</p>
+                    <p className="text-zinc-400">{event.contact.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 text-[#E50914] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-white block">Contact Email</p>
+                    <p className="text-zinc-400">{event.contact.email}</p>
+                  </div>
+                </div>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}
                   target="_blank"

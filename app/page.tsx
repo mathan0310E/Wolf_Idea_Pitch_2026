@@ -6,6 +6,9 @@ import Image from "next/image";
 import {
   Shield,
   Calendar,
+  MapPin,
+  Phone,
+  Mail,
   Users,
   Award,
   Lock,
@@ -338,14 +341,32 @@ export default function Home() {
                 <p className="text-white/70 text-sm leading-relaxed">
                   Join Cyber Wolf live at the official venue for WOLF IDEA PITCH 2026. High-speed networking, collaborative hacking labs, and presentation areas provided.
                 </p>
-                <div className="space-y-3 text-xs text-white/80">
-                  <div className="p-4 bg-[#0F0F0F] border border-white/10">
-                    <span className="font-bold text-white block">Venue Name:</span>
-                    <span className="text-white/60 font-mono">{event.venue}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-white/80">
+                  <div className="p-4 bg-[#0F0F0F] border border-white/10 hover:border-[#FF0007]/40 hover:bg-[#141414] transition-all duration-200 space-y-1.5">
+                    <MapPin className="w-4 h-4 text-[#FF0007]" />
+                    <span className="font-bold text-white block">Venue</span>
+                    <span className="text-white/60 font-mono block">{event.venue}</span>
                   </div>
-                  <div className="p-4 bg-[#0F0F0F] border border-white/10">
-                    <span className="font-bold text-white block">Full Address:</span>
-                    <span className="text-white/60 font-mono">{event.venueAddress}</span>
+                  <div className="p-4 bg-[#0F0F0F] border border-white/10 hover:border-[#FF0007]/40 hover:bg-[#141414] transition-all duration-200 space-y-1.5">
+                    <Calendar className="w-4 h-4 text-[#FF0007]" />
+                    <span className="font-bold text-white block">Event Date</span>
+                    <span className="text-white/60 font-mono block">
+                      {new Date(event.date).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <div className="p-4 bg-[#0F0F0F] border border-white/10 hover:border-[#FF0007]/40 hover:bg-[#141414] transition-all duration-200 space-y-1.5">
+                    <Phone className="w-4 h-4 text-[#FF0007]" />
+                    <span className="font-bold text-white block">Contact</span>
+                    <span className="text-white/60 font-mono block">{event.contact.phone}</span>
+                  </div>
+                  <div className="p-4 bg-[#0F0F0F] border border-white/10 hover:border-[#FF0007]/40 hover:bg-[#141414] transition-all duration-200 space-y-1.5">
+                    <Mail className="w-4 h-4 text-[#FF0007]" />
+                    <span className="font-bold text-white block">Full Address</span>
+                    <span className="text-white/60 font-mono block">{event.venueAddress}</span>
                   </div>
                 </div>
               </div>

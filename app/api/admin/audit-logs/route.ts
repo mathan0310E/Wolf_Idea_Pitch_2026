@@ -13,7 +13,12 @@ export async function GET(req: NextRequest) {
     docs.sort((a, b) =>
       String(b.data().timestamp || "").localeCompare(String(a.data().timestamp || ""))
     );
-    const logs = docs.filter((doc): doc is QueryDocumentSnapshot<DocumentData, DocumentData> => "id" in doc).map((doc) => ({ id: doc.id, ...doc.data() }));
+    const logs = docs.map((doc) => {
+      const d = doc as QueryDocumentSnapshot<DocumentData, DocumentData> & {
+        id?: string;
+      };
+      return { id: d.id ?? "unknown", ...d.data() };
+    });
     return NextResponse.json({ success: true, logs });
   } catch (error) {
     console.error("Failed to load audit logs:", error);
