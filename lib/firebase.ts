@@ -15,8 +15,20 @@ const firebaseConfig = {
     "wolf-idea-pitch-2026.appspot.com",
   messagingSenderId:
     process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "1234567890",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:1234567890:web:demo",
+  appId:
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID ||
+    "1:1234567890:web:demo",
 };
+
+// Loud production warning — placeholder Firebase config silently breaks
+// every client auth call. Do not throw: the prod build must stay portable;
+// the runtime failure surfaces in the browser console and in /api/health.
+if (process.env.NODE_ENV === "production" && process.env.NEXT_PUBLIC_FIREBASE_API_KEY === undefined) {
+  console.error(
+    "[FATAL CONFIG] NEXT_PUBLIC_FIREBASE_API_KEY is missing in production. " +
+      "Client-side Firebase auth (admin login, registration) will fail."
+  );
+}
 
 // Initialize Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);

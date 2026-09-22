@@ -3,41 +3,77 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { Lock, AlertCircle } from "lucide-react";
+import { AlertCircle, FlaskConical } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
+const IS_DEV = process.env.NODE_ENV === "development";
+
+function GoogleG() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#ffffff"
+        d="M21.35 11.1h-9.17v2.96h5.28c-.23 1.36-1.66 4-5.28 4-3.18 0-5.77-2.63-5.77-5.88s2.59-5.88 5.77-5.88c1.8 0 3 .77 3.7 1.43l2.52-2.43C16.75 3.7 14.78 2.8 12.18 2.8 7.13 2.8 3.04 6.88 3.04 12.18s4.09 9.38 9.14 9.38c5.28 0 8.78-3.71 8.78-8.94 0-.6-.06-1.04-.15-1.52z"
+      />
+    </svg>
+  );
+}
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDevSignIn = () => {
+    // Dev-only bypass: with no FIREBASE_ADMIN_* env vars configured, the
+    // server runs in mock mode (lib/firebase-admin.ts) and accepts any
+    // Bearer token as role "admin". This button is stripped from production
+    // builds because IS_DEV is inlined at build time.
+    sessionStorage.setItem("wolf_admin_session", "dev-mock-admin-token");
+    router.push("/admin/dashboard");
+  };
+
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      // Firebase Auth is the ONLY credential path — no hardcoded fallback.
-      // The signed-in user must carry the `role: "admin"` custom claim;
-      // every /api/admin/* route re-verifies it server-side (see lib/admin-auth.ts).
-      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const cred = await signInWithPopup(auth, provider);
       const idToken = await cred.user.getIdToken();
-      const res = await cred.user.getIdTokenResult();
-      if ((res.claims as { role?: string }).role !== "admin") {
-        setError(
-          "This account is not an admin. Ask the organizer to grant the admin role (see FIREBASE_SETUP.md)."
-        );
+
+      // Server-side gate: requireAdmin() in lib/admin-auth.ts enforces the
+      // ADMIN_EMAILS allowlist for every /api/admin/* route. The session is
+      // only stored after the server confirms this account is authorized.
+      const res = await fetch("/api/admin/session", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+
+      if (!res.ok) {
+        await signOut(auth); // not an admin — drop the Firebase session
+        setError(data.error || "This Google account is not authorized for admin access.");
         return;
       }
+
       sessionStorage.setItem("wolf_admin_session", idToken);
       router.push("/admin/dashboard");
-    } catch {
-      setError("Invalid admin credentials or permission denied.");
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        setError("Sign-in window was closed before finishing.");
+      } else if (code === "auth/popup-blocked") {
+        setError("Your browser blocked the sign-in popup. Allow popups and try again.");
+      } else if (code === "auth/unauthorized-domain") {
+        setError(
+          "This domain is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains."
+        );
+      } else {
+        setError("Google sign-in failed. Enable the Google provider in Firebase Console and try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -73,43 +109,52 @@ export default function AdminLoginPage() {
         </div>
 
         <Card variant="default" className="border-white/15 p-6 sm:p-8 bg-[#0F0F0F] rounded-none">
-          <form onSubmit={handleLogin} className="space-y-5">
-            <Input
-              label="Admin Email"
-              type="email"
-              required
-              placeholder="admin@cyberwolf.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              required
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <div className="space-y-5">
+            <p className="text-xs text-white/60 leading-relaxed text-center">
+              Access is restricted to the organizer account.
+              <br />
+              Sign in with the authorized Google email only.
+            </p>
 
             {error && (
-              <div className="p-3 bg-[#FF0007]/10 border border-[#FF0007]/30 text-xs text-[#FF0007] flex items-center gap-2 font-medium">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="p-3 bg-[#FF0007]/10 border border-[#FF0007]/30 text-xs text-[#FF0007] flex items-start gap-2 font-medium">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleGoogleSignIn}
               disabled={isLoading}
               style={{ backgroundColor: "#FF0007" }}
-              className="w-full inline-flex h-11 items-center justify-center gap-2 rounded-none px-5 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition hover:opacity-90 disabled:opacity-50"
+              className="w-full inline-flex h-11 items-center justify-center gap-2.5 rounded-none px-5 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition hover:opacity-90 disabled:opacity-50"
             >
-              <Lock className="w-4 h-4" />
-              <span>{isLoading ? "Authenticating..." : "Sign In to Dashboard"}</span>
+              <GoogleG />
+              <span>{isLoading ? "Authenticating..." : "Sign in with Google"}</span>
             </button>
-          </form>
+          </div>
         </Card>
+
+        {IS_DEV && (
+          <div className="rounded-none border border-dashed border-amber-500/40 bg-amber-500/5 p-4 text-center space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">
+              Dev Only — No Firebase Required
+            </p>
+            <button
+              type="button"
+              onClick={handleDevSignIn}
+              className="w-full inline-flex h-10 items-center justify-center gap-2 rounded-none border border-amber-500/50 px-5 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-400 transition hover:bg-amber-500/10"
+            >
+              <FlaskConical className="w-4 h-4" />
+              <span>Dev Sign-In (Mock Admin)</span>
+            </button>
+            <p className="text-[10px] text-white/40 leading-relaxed">
+              Skips auth and uses the in-memory mock store (data resets on server
+              restart). Hidden in production builds.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

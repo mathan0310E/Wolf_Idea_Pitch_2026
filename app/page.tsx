@@ -348,16 +348,51 @@ export default function Home() {
                     <span className="font-bold text-white block">City / Location:</span>
                     <span className="text-white/60 font-mono">{event.city}</span>
                   </div>
+                  <div className="p-4 bg-[#0F0F0F] border border-white/10">
+                    <span className="font-bold text-white block">Email:</span>
+                    <a
+                      href={`mailto:${event.contact.email}`}
+                      className="text-white/60 font-mono text-[#FF0007] hover:underline break-all"
+                    >
+                      {event.contact.email}
+                    </a>
+                  </div>
+                  <div className="p-4 bg-[#0F0F0F] border border-white/10">
+                    <span className="font-bold text-white block">Phone:</span>
+                    <a
+                      href={`tel:${event.contact.phone.replace(/[^+\d]/g, "")}`}
+                      className="text-white/60 font-mono text-[#FF0007] hover:underline"
+                    >
+                      {event.contact.phone}
+                    </a>
+                  </div>
                 </div>
               </div>
 
-              <div className="border border-white/10 bg-[#0F0F0F] h-[350px] flex items-center justify-center text-center p-6 relative">
-                <div className="space-y-2">
-                  <MapPin className="w-10 h-10 text-[#FF0007] mx-auto animate-bounce" />
-                  <h4 className="font-bold text-white text-lg">[VENUE MAP EMBED]</h4>
-                  <p className="text-xs text-white/60 max-w-xs">
-                    Map embed placeholder. Coordinates will be populated when configured by organizer.
+                            <div className="space-y-3">
+                <div className="h-64 rounded-xl overflow-hidden border border-white/10 bg-[#111]">
+                  <iframe
+                    title={`Map — ${event.venue}, ${event.city}`}
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(event.venueAddress)}&z=16&output=embed`}
+                    className="w-full h-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                </div>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs text-white/60 font-mono break-all">
+                    {event.venueAddress}
                   </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FF0007] hover:text-white transition-colors shrink-0"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    View on Maps
+                  </a>
                 </div>
               </div>
             </div>

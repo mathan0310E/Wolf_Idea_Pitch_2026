@@ -59,9 +59,9 @@ export const event = {
   shortName: "WOLF IDEA PITCH 2026",
   tagline: "LEARN • SECURE • BUILD",
   date: "2026-10-09",
-  venue: "Cyber Wolf HQ",
+  venue: "Cyber Wolf",
   city: "Tiruvannamalai, Tamil Nadu",
-  venueAddress: "No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu - 606601, India",
+  venueAddress: "No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu – 606601, India",
   contact: {
     phone: "+91 63798 69678",
     email: "info@cyberwolf360.in",

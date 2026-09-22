@@ -8,12 +8,27 @@ export interface AdminContext {
 }
 
 /**
+ * Strict allowlist: when ADMIN_EMAILS is configured, ONLY these accounts may
+ * administer the event — matching emails are accepted, everyone else is
+ * rejected regardless of custom claims. Case-insensitive, comma-separated.
+ */
+const ADMIN_ALLOWLIST = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+const isAllowlisted = (email: string | undefined) =>
+  !!email && ADMIN_ALLOWLIST.includes(email.toLowerCase());
+
+/**
  * Gate for all /api/admin/* routes (§6, §8 non-negotiable #8).
- * Real Firebase mode: verifies the Firebase ID token AND the `role: "admin"`
- * custom claim. Dev/mock mode (no Admin SDK credentials): still requires a
- * Bearer token so routes are never fully open, and the caller is identified
- * from the (mock) decoded token. Production MUST set Admin SDK credentials
- * and assign custom claims (see FIREBASE_SETUP.md).
+ * Real Firebase mode: verifies the Firebase ID token, then enforces ONE of:
+ *   1. ADMIN_EMAILS allowlist (when configured — the strict gate), or
+ *   2. the `role: "admin"` custom claim (when no allowlist is configured).
+ * Dev/mock mode (no Admin SDK credentials): still requires a Bearer token so
+ * routes are never fully open, and the caller is identified from the (mock)
+ * decoded token. Production MUST set Admin SDK credentials (see
+ * FIREBASE_SETUP.md).
  */
 export async function requireAdmin(
   req: NextRequest
@@ -39,13 +54,28 @@ export async function requireAdmin(
       role?: string;
     };
 
-    if (isFirebaseAdminReal() && decoded.role !== "admin") {
-      return {
-        error: NextResponse.json(
-          { error: "Forbidden: admin role required." },
-          { status: 403 }
-        ),
-      };
+    if (isFirebaseAdminReal()) {
+      if (ADMIN_ALLOWLIST.length > 0) {
+        if (!isAllowlisted(decoded.email)) {
+          return {
+            error: NextResponse.json(
+              {
+                error: `Forbidden: ${
+                  decoded.email || "this account"
+                } is not on the admin allowlist (ADMIN_EMAILS).`,
+              },
+              { status: 403 }
+            ),
+          };
+        }
+      } else if (decoded.role !== "admin") {
+        return {
+          error: NextResponse.json(
+            { error: "Forbidden: admin role required." },
+            { status: 403 }
+          ),
+        };
+      }
     }
 
     return {

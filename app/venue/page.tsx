@@ -21,34 +21,52 @@ export default function VenuePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
             <div className="p-8 rounded-xl bg-[#151515] border border-white/10 space-y-6">
               <div className="flex items-center gap-3">
                 <MapPin className="w-8 h-8 text-[#E50914]" />
-                <h3 className="font-display text-2xl font-bold text-white">Venue Details</h3>
+                <h3 className="font-display text-2xl font-bold text-white">Location</h3>
               </div>
-              <div className="space-y-3 text-sm text-zinc-300">
-                <p><span className="font-bold text-white">Venue Name:</span> {event.venue}</p>
-                <p><span className="font-bold text-white">Address:</span> {event.venueAddress}</p>
-                <p><span className="font-bold text-white">City / Region:</span> {event.city}</p>
+              <div className="space-y-4 text-sm text-zinc-300">
+                <div>
+                  <p className="font-display font-bold text-white text-xl">{event.venue}</p>
+                  <p className="mt-2 leading-relaxed">
+                    No. 3A, 10th Street, Gandhi Nagar
+                    <br />
+                    Tiruvannamalai
+                    <br />
+                    Tamil Nadu – 606601, India
+                  </p>
+                </div>
                 <p><span className="font-bold text-white">Contact Phone:</span> {event.contact.phone}</p>
                 <p><span className="font-bold text-white">Contact Email:</span> {event.contact.email}</p>
               </div>
             </div>
 
-            <div className="h-[300px] rounded-xl bg-[#151515] border border-white/10 flex items-center justify-center p-6 text-center">
-              <div className="space-y-2">
-                <Navigation className="w-10 h-10 text-[#E50914] mx-auto animate-bounce" />
-                <h4 className="font-bold text-white text-lg">Cyber Wolf HQ</h4>
-                <p className="text-xs text-zinc-400">No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu - 606601, India</p>
+            <div className="flex flex-col gap-4">
+              <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden bg-[#151515] border border-white/10">
+                <iframe
+                  title={`Map — ${event.venue}, ${event.city}`}
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(event.venueAddress)}&z=16&output=embed`}
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-[#151515] border border-white/10 px-5 py-4">
+                <div className="min-w-0">
+                  <h4 className="font-bold text-white">{event.venue}</h4>
+                  <p className="text-xs text-zinc-400 truncate">{event.venueAddress}</p>
+                </div>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venueAddress)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#E50914] hover:text-white transition-colors"
+                  className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-[#E50914] hover:text-white transition-colors"
                 >
                   <Navigation className="w-3.5 h-3.5" />
-                  View on Google Maps
+                  Directions
                 </a>
               </div>
             </div>

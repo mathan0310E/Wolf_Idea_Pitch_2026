@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminStorage, isFirebaseAdminReal } from "@/lib/firebase-admin";
+import { adminStorage, isFirebaseAdminReal, resolveStorageBucketName } from "@/lib/firebase-admin";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB — matches FileDropzone client guard
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -57,8 +57,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Dev/mock fallback — no Storage bucket available
+    // Dev/mock fallback — no Storage bucket available. In production this
+    // must be a hard failure: a fake success URL would corrupt the record.
     if (!isFirebaseAdminReal()) {
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Upload service is temporarily unavailable. Please try again later." },
+          { status: 503 }
+        );
+      }
       return NextResponse.json({
         success: true,
         url: dataUrl,
@@ -67,14 +74,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const safeName = (fileName || "screenshot.png")
+        const safeName = (fileName || "screenshot.png")
       .replace(/[^a-zA-Z0-9._-]/g, "_")
       .slice(0, 80);
     const path = `payment-screenshots/${Date.now()}_${Math.random()
       .toString(36)
       .slice(2, 8)}/${safeName}`;
 
-    const bucket = adminStorage.bucket();
+    const bucketName = await resolveStorageBucketName();
+    const bucket = adminStorage.bucket(bucketName);
     const file = bucket.file(path);
     await file.save(buffer, {
       metadata: { contentType: mime },
@@ -89,7 +97,13 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Screenshot Upload Error:", error);
     return NextResponse.json(
-      { error: "Failed to upload screenshot. Please try again." },
+      {
+        error:
+          "Failed to upload screenshot. Please try again." +
+          (process.env.NODE_ENV !== "production" && error instanceof Error
+            ? ` [dev-detail: ${error.message}]`
+            : ""),
+      },
       { status: 500 }
     );
   }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { type QueryDocumentSnapshot, type DocumentData } from "firebase-admin/firestore";
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
@@ -9,11 +8,17 @@ export async function GET(req: NextRequest) {
 
   try {
     const snapshot = await adminDb.collection("auditLogs").orderBy("timestamp", "desc").get();
-    const docs = snapshot.docs;
+    // Union of mock-store docs and real Firestore snapshots — normalize once.
+    const docs = snapshot.docs as unknown as {
+      id?: string;
+      data: () => Record<string, unknown>;
+    }[];
     docs.sort((a, b) =>
       String(b.data().timestamp || "").localeCompare(String(a.data().timestamp || ""))
     );
-    const logs = docs.filter((doc): doc is QueryDocumentSnapshot<DocumentData, DocumentData> => "id" in doc).map((doc) => ({ id: doc.id, ...doc.data() }));
+    const logs = docs
+      .filter((doc) => typeof doc.id === "string")
+      .map((doc) => ({ id: doc.id as string, ...doc.data() }));
     return NextResponse.json({ success: true, logs });
   } catch (error) {
     console.error("Failed to load audit logs:", error);

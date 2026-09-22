@@ -35,6 +35,18 @@ export async function POST(req: NextRequest) {
 
     const { teamType, teamName, domain, members, transactionId, utr, screenshotUrl } = parseResult.data;
 
+    // 2a. Production guard — never persist registrations to the in-memory
+    // mock store. Fail loudly instead of silently losing data.
+    if (!isFirebaseAdminReal() && process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        {
+          error:
+            "Registration service is temporarily unavailable. Please contact the organizers.",
+        },
+        { status: 503 }
+      );
+    }
+
     // 2b. Registration gate — organizer-controlled, no redeploy needed
     try {
       const settingsDoc = await adminDb
