@@ -48,21 +48,31 @@ export function CountdownTimer({ targetDate, className }: CountdownTimerProps) {
 
   return (
     <div className={`flex items-center gap-3 sm:gap-4 ${className ?? ""}`}>
-      {units.map((unit, i) => (
-        <React.Fragment key={unit.label}>
-          {i > 0 && <span className="text-2xl sm:text-3xl font-bold text-white/30">:</span>}
-          <div className="flex flex-col items-center gap-1">
-            <div className="min-w-[3.25rem] sm:min-w-[4.5rem] px-2 py-2.5 sm:py-3 rounded-md bg-white/10 border border-white/15 backdrop-blur-sm">
-              <span className="font-mono text-2xl sm:text-4xl font-extrabold text-white tabular-nums">
-                {unit.value}
+      {units.map((unit, i) => {
+        const isSeconds = unit.label === "Secs";
+        return (
+          <React.Fragment key={unit.label}>
+            {i > 0 && <span className="text-2xl sm:text-3xl font-bold text-white/30">:</span>}
+            <div className="flex flex-col items-center gap-1">
+              <div className="min-w-[3.25rem] sm:min-w-[4.5rem] px-2 py-2.5 sm:py-3 rounded-md bg-white/10 border border-white/15 backdrop-blur-sm">
+                {/* Re-keying on the value remounts the node, replaying the tick
+                    animation exactly once per second — no JS timer per digit. */}
+                <span
+                  key={isSeconds ? unit.value : unit.label}
+                  className={`font-mono text-2xl sm:text-4xl font-extrabold text-white tabular-nums${
+                    isSeconds ? " animate-tick" : ""
+                  }`}
+                >
+                  {unit.value}
+                </span>
+              </div>
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
+                {unit.label}
               </span>
             </div>
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
-              {unit.label}
-            </span>
-          </div>
-        </React.Fragment>
-      ))}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 }

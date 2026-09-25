@@ -4,13 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Shield,
-  Calendar,
-  Users,
   Award,
   Lock,
   Zap,
-  ChevronRight,
   CheckCircle2,
   ArrowRight,
   ChevronDown,
@@ -19,6 +15,9 @@ import {
 import { Navbar } from "@/components/navbar";
 import { ClipButton } from "@/components/clip-button";
 import { CountdownTimer } from "@/components/countdown-timer";
+import { Reveal } from "@/components/reveal";
+import { SplitText } from "@/components/split-text";
+import { Marquee } from "@/components/marquee";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { event, teamTypes, formatINR } from "@/config/event";
@@ -65,7 +64,7 @@ export default function Home() {
             priority
             sizes="100vw"
             quality={75}
-            className="object-cover object-center opacity-70"
+            className="object-cover object-center opacity-70 hero-parallax"
             style={{ objectPosition: "center top" }}
           />
           <div className="absolute inset-0 bg-black/60 pointer-events-none" />
@@ -76,21 +75,26 @@ export default function Home() {
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-[#FF0007]/10 blur-[140px] pointer-events-none" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20 sm:py-28 md:py-36">
-            <div className="max-w-3xl text-center lg:text-left space-y-6">
+            <div className="max-w-3xl text-center lg:text-left space-y-6 stagger">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 flex items-center justify-center lg:justify-start gap-2">
                 <span className="h-1.5 w-1.5 shrink-0 bg-[#FF0007]" />
                 CYBER WOLF PRESENTS
               </p>
 
-              <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.05]">
-                WOLF IDEA PITCH <span className="text-[#FF0007]">2026</span>
-              </h1>
+              <SplitText
+                as="h1"
+                text="WOLF IDEA PITCH 2026"
+                accentFrom={3}
+                delay={120}
+                stagger={70}
+                className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.05]"
+              />
 
               <p className="font-display text-xl sm:text-2xl font-bold tracking-[0.18em] text-white/90 uppercase">
                 {event.tagline.split(" • ").map((word, i, { length }) => (
                   <span
                     key={word}
-                    className={i === length - 1 ? "font-serif italic font-normal normal-case text-[#FF0007]" : undefined}
+                    className={i === length - 1 ? "font-serif italic font-normal normal-case text-[#FF0007] text-sheen" : undefined}
                   >
                     {word}
                     {i !== length - 1 && <span className="mx-1.5 opacity-50">•</span>}
@@ -106,7 +110,7 @@ export default function Home() {
                 <ClipButton
                   href="/register"
                   size="lg"
-                  className="min-h-12 sm:min-h-14"
+                  className="magnetic min-h-12 sm:min-h-14"
                 >
                   <span>Register Your Team</span>
                   <ArrowRight className="w-4 h-4" />
@@ -151,53 +155,77 @@ export default function Home() {
           </div>
         </section>
 
+        {/* KEYWORD TICKER — seamless CSS marquee, pauses on hover */}
+        <div className="border-b border-white/10 bg-black py-3.5 overflow-hidden">
+          <Marquee
+            items={[
+              "Cybersecurity",
+              "VAPT",
+              "Networking",
+              "AI & Innovation",
+              "Cloud Security",
+              "Digital Forensics",
+              "Web3 Security",
+              "SOC Operations",
+            ]}
+          />
+        </div>
+
         {/* EVENT HIGHLIGHTS */}
         <section className="py-16 sm:py-20 border-b border-white/10 bg-[#0F0F0F]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card variant="hover">
-                <CardHeader>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">01. FEE MODEL</span>
-                  <CardTitle className="text-3xl font-extrabold text-[#FF0007]">₹300</CardTitle>
-                  <CardDescription className="text-white/80 font-medium">Flat Fee Per Participant</CardDescription>
-                </CardHeader>
-                <CardContent className="text-xs text-white/60">
-                  Solo (₹300), Duo (₹600), Squad (₹1,200). Enforced server-side.
-                </CardContent>
-              </Card>
+              <Reveal className="h-full">
+                <Card variant="hover" className="h-full">
+                  <CardHeader>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">01. FEE MODEL</span>
+                    <CardTitle className="text-3xl font-extrabold text-[#FF0007]">₹300</CardTitle>
+                    <CardDescription className="text-white/80 font-medium">Flat Fee Per Participant</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-xs text-white/60">
+                    Solo (₹300), Duo (₹600), Squad (₹1,200). Enforced server-side.
+                  </CardContent>
+                </Card>
+              </Reveal>
 
-              <Card variant="hover">
-                <CardHeader>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">02. TEAM TYPES</span>
-                  <CardTitle className="text-3xl font-extrabold text-[#FF0007]">1 – 4</CardTitle>
-                  <CardDescription className="text-white/80 font-medium">Members Per Team</CardDescription>
-                </CardHeader>
-                <CardContent className="text-xs text-white/60">
-                  Flexible participation: Solo, Duo of 2, or Squad of 4 members.
-                </CardContent>
-              </Card>
+              <Reveal className="h-full" delay={70}>
+                <Card variant="hover" className="h-full">
+                  <CardHeader>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">02. TEAM TYPES</span>
+                    <CardTitle className="text-3xl font-extrabold text-[#FF0007]">1 – 4</CardTitle>
+                    <CardDescription className="text-white/80 font-medium">Members Per Team</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-xs text-white/60">
+                    Flexible participation: Solo, Duo of 2, or Squad of 4 members.
+                  </CardContent>
+                </Card>
+              </Reveal>
 
-              <Card variant="hover">
-                <CardHeader>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">03. EVENT DATE</span>
-                  <CardTitle className="text-3xl font-extrabold text-[#FF0007]">09 OCT</CardTitle>
-                  <CardDescription className="text-white/80 font-medium">Event Date 2026</CardDescription>
-                </CardHeader>
-                <CardContent className="text-xs text-white/60">
-                  Save the date for Cyber Wolf&apos;s annual flagship idea pitch.
-                </CardContent>
-              </Card>
+              <Reveal className="h-full" delay={140}>
+                <Card variant="hover" className="h-full">
+                  <CardHeader>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">03. EVENT DATE</span>
+                    <CardTitle className="text-3xl font-extrabold text-[#FF0007]">09 OCT</CardTitle>
+                    <CardDescription className="text-white/80 font-medium">Event Date 2026</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-xs text-white/60">
+                    Save the date for Cyber Wolf&apos;s annual flagship idea pitch.
+                  </CardContent>
+                </Card>
+              </Reveal>
 
-              <Card variant="hover">
-                <CardHeader>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">04. SECURITY</span>
-                  <CardTitle className="text-3xl font-extrabold text-[#FF0007]">VERIFIED</CardTitle>
-                  <CardDescription className="text-white/80 font-medium">Audit-Logged Admin Verification</CardDescription>
-                </CardHeader>
-                <CardContent className="text-xs text-white/60">
-                  Manual admin verification for all UPI submissions with live token lookup.
-                </CardContent>
-              </Card>
+              <Reveal className="h-full" delay={210}>
+                <Card variant="hover" className="h-full">
+                  <CardHeader>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">04. SECURITY</span>
+                    <CardTitle className="text-3xl font-extrabold text-[#FF0007]">VERIFIED</CardTitle>
+                    <CardDescription className="text-white/80 font-medium">Audit-Logged Admin Verification</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-xs text-white/60">
+                    Manual admin verification for all UPI submissions with live token lookup.
+                  </CardContent>
+                </Card>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -205,58 +233,68 @@ export default function Home() {
         {/* CORE PILLARS: LEARN • SECURE • BUILD */}
         <section className="py-20 sm:py-24 border-b border-white/10 bg-[#000000]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-            <div className="max-w-2xl">
+            <Reveal className="max-w-2xl block">
               <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
                 <span className="h-1.5 w-1.5 shrink-0 bg-[#FF0007]" />
                 CORE PILLARS
               </p>
-              <h2 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
-                LEARN • SECURE • <span className="text-[#FF0007]">BUILD</span>
-              </h2>
+              <SplitText
+                as="h2"
+                text="LEARN • SECURE • BUILD"
+                accentFrom={4}
+                className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white"
+              />
+              <div aria-hidden="true" className="rule-grow mt-5 h-px w-24 bg-[#FF0007]" />
               <p className="mt-4 text-base text-white/70">
                 WOLF IDEA PITCH 2026 is designed to challenge security researchers, developers, and innovators across three core engineering disciplines.
               </p>
-            </div>
+            </Reveal>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card variant="hover">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-[#FF0007]/10 border border-[#FF0007]/30 flex items-center justify-center text-[#FF0007] mb-4">
-                    <Zap className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 01</span>
-                  <CardTitle className="text-2xl text-white">01. LEARN</CardTitle>
-                  <CardDescription className="text-white/70">
-                    Gain deep insights into modern vulnerability vectors, cloud misconfigurations, and threat landscape modeling.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <Reveal className="h-full">
+                <Card variant="default" className="h-full spotlight tilt">
+                  <CardHeader>
+                    <div className="w-12 h-12 bg-[#FF0007]/10 border border-[#FF0007]/30 flex items-center justify-center text-[#FF0007] mb-4">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 01</span>
+                    <CardTitle className="text-2xl text-white">01. LEARN</CardTitle>
+                    <CardDescription className="text-white/70">
+                      Gain deep insights into modern vulnerability vectors, cloud misconfigurations, and threat landscape modeling.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Reveal>
 
-              <Card variant="hover">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-[#FF0007]/10 border border-[#FF0007]/30 flex items-center justify-center text-[#FF0007] mb-4">
-                    <Lock className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 02</span>
-                  <CardTitle className="text-2xl text-white">02. SECURE</CardTitle>
-                  <CardDescription className="text-white/70">
-                    Architect zero-trust solutions, hardened APIs, and secure data pipeline protocols to defend critical systems.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <Reveal className="h-full" delay={90}>
+                <Card variant="default" className="h-full spotlight tilt">
+                  <CardHeader>
+                    <div className="w-12 h-12 bg-[#FF0007]/10 border border-[#FF0007]/30 flex items-center justify-center text-[#FF0007] mb-4">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 02</span>
+                    <CardTitle className="text-2xl text-white">02. SECURE</CardTitle>
+                    <CardDescription className="text-white/70">
+                      Architect zero-trust solutions, hardened APIs, and secure data pipeline protocols to defend critical systems.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Reveal>
 
-              <Card variant="hover">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-[#FF0007]/10 border border-[#FF0007]/30 flex items-center justify-center text-[#FF0007] mb-4">
-                    <Award className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 03</span>
-                  <CardTitle className="text-2xl text-white">03. BUILD</CardTitle>
-                  <CardDescription className="text-white/70">
-                    Transform conceptual idea pitch proposals into functional prototypes and present them to Cyber Wolf mentors.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <Reveal className="h-full" delay={180}>
+                <Card variant="default" className="h-full spotlight tilt">
+                  <CardHeader>
+                    <div className="w-12 h-12 bg-[#FF0007]/10 border border-[#FF0007]/30 flex items-center justify-center text-[#FF0007] mb-4">
+                      <Award className="w-6 h-6" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FF0007]">PILLAR 03</span>
+                    <CardTitle className="text-2xl text-white">03. BUILD</CardTitle>
+                    <CardDescription className="text-white/70">
+                      Transform conceptual idea pitch proposals into functional prototypes and present them to Cyber Wolf mentors.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -264,22 +302,26 @@ export default function Home() {
         {/* CATEGORY & FEE MODEL */}
         <section className="py-20 sm:py-24 border-b border-white/10 bg-[#0F0F0F]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-            <div className="max-w-2xl">
+            <Reveal className="max-w-2xl block">
               <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
                 <span className="h-1.5 w-1.5 shrink-0 bg-[#FF0007]" />
                 REGISTRATION CATEGORIES
               </p>
-              <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
-                TEAM TYPES & <span className="text-[#FF0007]">FEE MODEL</span>
-              </h2>
+              <SplitText
+                as="h2"
+                text="TEAM TYPES & FEE MODEL"
+                accentFrom={3}
+                className="mt-3 font-display text-3xl sm:text-4xl font-bold tracking-tight text-white"
+              />
               <p className="mt-4 text-base text-white/70">
                 Fixed flat fee of ₹300 per participant across all categories.
               </p>
-            </div>
+            </Reveal>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {teamTypes.map((type) => (
-                <Card key={type.id} variant="hover" className="flex flex-col justify-between">
+              {teamTypes.map((type, idx) => (
+                <Reveal key={type.id} className="h-full" delay={idx * 90}>
+                <Card variant="hover" className="flex flex-col justify-between h-full spotlight">
                   <CardHeader>
                     <span className="inline-block px-3 py-1 bg-[#141414] border border-white/10 text-[10px] font-mono text-[#FF0007] w-fit mb-3 uppercase font-bold">
                       {type.memberCount} Participant{type.memberCount > 1 ? "s" : ""}
@@ -319,6 +361,7 @@ export default function Home() {
                     </Link>
                   </div>
                 </Card>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -328,14 +371,17 @@ export default function Home() {
         <section className="py-20 sm:py-24 border-b border-white/10 bg-[#000000]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
+              <Reveal className="space-y-6 block">
                 <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
                   <span className="h-1.5 w-1.5 shrink-0 bg-[#FF0007]" />
                   LOCATION & VENUE
                 </p>
-                <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
-                  EVENT <span className="text-[#FF0007]">VENUE</span>
-                </h2>
+                <SplitText
+                  as="h2"
+                  text="EVENT VENUE"
+                  accentFrom={1}
+                  className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white"
+                />
                 <p className="text-white/70 text-sm leading-relaxed">
                   Join Cyber Wolf live at the official venue for WOLF IDEA PITCH 2026. High-speed networking, collaborative hacking labs, and presentation areas provided.
                 </p>
@@ -367,9 +413,9 @@ export default function Home() {
                     </a>
                   </div>
                 </div>
-              </div>
+              </Reveal>
 
-                <div className="space-y-3">
+                <Reveal className="space-y-3 block" delay={120}>
                 <div className="h-64 rounded-xl overflow-hidden border border-white/10 bg-[#111]">
                   <iframe
                     title={`Map — ${event.venue}, ${event.city}`}
@@ -394,7 +440,7 @@ export default function Home() {
                     View on Maps
                   </a>
                 </div>
-              </div>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -402,37 +448,46 @@ export default function Home() {
         {/* FAQ ACCORDION */}
         <section className="py-20 sm:py-24 border-b border-white/10 bg-[#0F0F0F]">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-            <div className="text-center space-y-3">
+            <Reveal className="text-center space-y-3 block">
               <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">
                 <span className="h-1.5 w-1.5 shrink-0 bg-[#FF0007]" />
                 QUESTIONS & ANSWERS
               </p>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
-                FREQUENTLY ASKED <span className="text-[#FF0007]">QUESTIONS</span>
-              </h2>
-            </div>
+              <SplitText
+                as="h2"
+                text="FREQUENTLY ASKED QUESTIONS"
+                accentFrom={2}
+                className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white"
+              />
+            </Reveal>
 
             <div className="space-y-3">
               {faqs.map((faq, idx) => (
-                <div key={idx} className="bg-[#000000] border border-white/10 overflow-hidden">
+                <Reveal key={idx} as="div" delay={Math.min(idx * 60, 300)}>
+                <div className="bg-[#000000] border border-white/10 overflow-hidden">
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    aria-expanded={openFaq === idx}
                     className="w-full p-6 text-left flex items-center justify-between gap-4 font-display font-bold text-base text-white hover:text-[#FF0007] transition-colors"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
                       className={cn(
-                        "w-5 h-5 text-white/50 transition-transform duration-200",
+                        "w-5 h-5 text-white/50 transition-transform duration-300 ease-out",
                         openFaq === idx && "transform rotate-180 text-[#FF0007]"
                       )}
                     />
                   </button>
-                  {openFaq === idx && (
+                  {/* 0fr -> 1fr grid trick (see globals.css .accordion-panel):
+                      animates open AND closed smoothly — no conditional mount,
+                      no fixed height, no height-property animation. */}
+                  <div className="accordion-panel" data-open={openFaq === idx}>
                     <div className="px-6 pb-6 text-sm text-white/70 leading-relaxed border-t border-white/10 pt-4">
                       {faq.a}
                     </div>
-                  )}
+                  </div>
                 </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -440,10 +495,13 @@ export default function Home() {
 
         {/* FINAL CTA */}
         <section className="py-24 bg-[#000000] text-center relative overflow-hidden">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
-            <h2 className="font-display text-3xl sm:text-5xl font-bold text-white">
-              READY TO BUILD WITH <span className="text-[#FF0007]">CYBER WOLF</span>?
-            </h2>
+          <Reveal className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10 block">
+            <SplitText
+              as="h2"
+              text="READY TO BUILD WITH CYBER WOLF?"
+              accentFrom={4}
+              className="font-display text-3xl sm:text-5xl font-bold text-white"
+            />
             <p className="text-white/70 text-sm sm:text-base max-w-2xl mx-auto">
               Secure your team registration for WOLF IDEA PITCH 2026 on 09 October 2026.
             </p>
@@ -456,7 +514,7 @@ export default function Home() {
                 <ArrowRight className="w-4 h-4" />
               </ClipButton>
             </div>
-          </div>
+          </Reveal>
         </section>
       </main>
 

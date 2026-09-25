@@ -16,8 +16,8 @@ export function FileDropzone({
   onFileSelect,
   error,
   accept = "image/jpeg,image/png,image/webp",
-  maxSizeBytes = 5 * 1024 * 1024, // 5MB
-  label = "Upload Payment Screenshot",
+  maxSizeBytes = 500 * 1024, // 500 KB — server enforces the same ceiling
+  label = "Payment Screenshot — Maximum 500 KB",
 }: FileDropzoneProps) {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
@@ -28,11 +28,13 @@ export function FileDropzone({
   const processFile = (file: File) => {
     setLocalError(null);
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
-      setLocalError("Only JPG, PNG, and WEBP image files are allowed.");
+      setLocalError("Only JPG, JPEG, PNG, and WEBP image files are accepted.");
       return;
     }
     if (file.size > maxSizeBytes) {
-      setLocalError(`File size must be less than ${(maxSizeBytes / (1024 * 1024)).toFixed(0)}MB.`);
+      setLocalError(
+        `File is ${(file.size / 1024).toFixed(0)} KB — maximum allowed is ${(maxSizeBytes / 1024).toFixed(0)} KB. Please compress the image and try again.`
+      );
       return;
     }
 
@@ -93,7 +95,7 @@ export function FileDropzone({
         <div className="relative rounded-xl border border-emerald-500/30 bg-[#1E1E1E] p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-black border border-white/10 flex-shrink-0">
-              {/* eslint-disable-next-html-element */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- local data-URL preview; next/image cannot optimize blob previews */}
               <img
                 src={previewUrl}
                 alt="Payment screenshot preview"
@@ -149,7 +151,7 @@ export function FileDropzone({
               Click or drag & drop payment screenshot
             </p>
             <p className="text-xs text-zinc-400">
-              Supports JPG, PNG, WEBP (Max 5MB)
+              Accepted: JPG, JPEG, PNG, WEBP (Maximum 500 KB)
             </p>
           </div>
         </div>

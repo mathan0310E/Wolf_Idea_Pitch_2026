@@ -44,5 +44,25 @@ next-env.d.ts
 # local dev logs
 server.log
 dev-server.log
+fresh-dev.log
+.dev-o.log
+.dev-e.log
+try-now-results.txt
+# one-off probe scripts
+scripts/check-env-tmp.cjs
+scripts/check-fb-conn-tmp.cjs
+scripts/fix-probe-tmp.cjs
 wolf_ideathon/
 .playwright-mcp/
+dev-server.err.log
+dev-server.out.log
+build-log.txt
+eslint-admin.txt
+eslint-out.txt
+file-list.txt
+file-list-2.txt
+lint-check.txt
+tsc-check.txt
+tsc-out.txt
+scan-placeholders.ps1
+scripts/probe-securetoken-per-ip.cjs

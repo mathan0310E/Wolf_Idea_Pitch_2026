@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  Shield,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -35,7 +34,6 @@ const STEPS = [
 ];
 
 function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -45,15 +43,20 @@ function RegisterForm() {
   const [members, setMembers] = React.useState<Member[]>([]);
   const [transactionId, setTransactionId] = React.useState("");
   const [utr, setUtr] = React.useState("");
-  const [screenshotUrl, setScreenshotUrl] = React.useState("");
+  const [screenshot, setScreenshot] = React.useState<{
+    file: File;
+    base64: string; // raw base64, no data: prefix — sent to the server
+    mimeType: string;
+    size: number;
+  } | null>(null);
   const [honeypot, setHoneypot] = React.useState("");
   const [termsAccepted, setTermsAccepted] = React.useState(false);
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitStage, setSubmitStage] = React.useState("idle");
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [gateOpen, setGateOpen] = React.useState<boolean | null>(null);
   const [gateAnnouncement, setGateAnnouncement] = React.useState<string>('');
-  const [isUploading, setIsUploading] = React.useState(false);
   const [submissionResult, setSubmissionResult] = React.useState<{
     registrationId: string;
     lookupToken: string;
@@ -87,6 +90,7 @@ function RegisterForm() {
     fetch('/api/admin/settings').then((r) => r.json()).then((d) => { if (d && d.settings) { setGateOpen(d.settings.open); setGateAnnouncement(d.settings.announcement || ''); } else { setGateOpen(true); } }).catch(() => setGateOpen(true));
     const typeParam = searchParams.get("type") as TeamTypeId;
     if (typeParam && ["individual", "duo", "square"].includes(typeParam)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL ?type= must hydrate form state + members array on navigation
       setTeamType(typeParam);
       updateMembersForType(typeParam);
     } else {
@@ -100,6 +104,7 @@ function RegisterForm() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.teamType) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- sessionStorage draft restore is client-only by definition; must run after mount
           setTeamType(parsed.teamType);
           setTeamName(parsed.teamName || "");
           setDomain(parsed.domain || event.themes[0].title);
@@ -108,7 +113,8 @@ function RegisterForm() {
           }
           if (parsed.transactionId) setTransactionId(parsed.transactionId);
           if (parsed.utr) setUtr(parsed.utr);
-          if (parsed.screenshotUrl) setScreenshotUrl(parsed.screenshotUrl);
+          // NOTE: the payment screenshot is never persisted to the draft —
+          // the participant re-selects the ≤500 KB file on each visit.
         }
       }
     } catch {
@@ -127,13 +133,12 @@ function RegisterForm() {
           members,
           transactionId,
           utr,
-          screenshotUrl,
         })
       );
     } catch {
       // Ignore
     }
-  }, [teamType, teamName, domain, members, transactionId, utr, screenshotUrl]);
+  }, [teamType, teamName, domain, members, transactionId, utr]);
 
   const memberCount = teamType === "individual" ? 1 : teamType === "duo" ? 2 : 4;
   const totalFee = memberCount * 300;
@@ -144,21 +149,26 @@ function RegisterForm() {
     event.payment.beneficiaryName
   )}&am=${totalFee}&cu=INR&tn=${encodeURIComponent(`WOLF IDEA PITCH 2026 - ${teamName || "Registration"}`)}`;
 
-  const handleScreenshot = async (file: File | null, base64Url: string) => {
-    if (!file || !base64Url) { setScreenshotUrl(''); return; }
-    setIsUploading(true);
-    try {
-      const res = await fetch('/api/uploads/screenshot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fileName: file.name, dataUrl: base64Url }) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Screenshot upload failed.');
-      setScreenshotUrl(data.url);
-      setErrors((prev) => { const next = { ...prev }; delete next.screenshotUrl; return next; });
-    } catch (err: unknown) {
-      setScreenshotUrl('');
-      setErrors((prev) => ({ ...prev, screenshotUrl: err instanceof Error ? err.message : 'Screenshot upload failed.' }));
-    } finally {
-      setIsUploading(false);
+  // Screenshot: ≤500 KB JPG/JPEG/PNG/WEBP validated locally, previewed via
+  // FileReader, and sent as Base64 inside the submit payload. No Storage upload.
+  const handleScreenshot = (file: File | null, base64Url: string) => {
+    if (!file || !base64Url) { setScreenshot(null); return; }
+    const comma = base64Url.indexOf(",");
+    const header = comma >= 0 ? base64Url.slice(0, comma) : "";
+    const raw = comma >= 0 ? base64Url.slice(comma + 1) : base64Url;
+    const mimeMatch = header.match(/^data:(image\/(jpeg|png|webp));base64$/);
+    if (!mimeMatch) {
+      setScreenshot(null);
+      setErrors((prev) => ({ ...prev, screenshot: "Only JPG, JPEG, PNG, and WEBP screenshots are accepted." }));
+      return;
     }
+    if (file.size > 500 * 1024) {
+      setScreenshot(null);
+      setErrors((prev) => ({ ...prev, screenshot: `Screenshot is ${(file.size / 1024).toFixed(0)} KB \u2014 maximum 500 KB. Please compress the image and try again.` }));
+      return;
+    }
+    setScreenshot({ file, base64: raw, mimeType: mimeMatch[1], size: file.size });
+    setErrors((prev) => { const next = { ...prev }; delete next.screenshot; return next; });
   };
 
   const handleMemberChange = (index: number, field: keyof Member, value: string | boolean) => {
@@ -192,7 +202,11 @@ function RegisterForm() {
     } else if (step === 6) {
       if (!transactionId.trim()) newErrors.transactionId = "Transaction ID is required.";
       if (!utr.trim()) newErrors.utr = "UTR / Payment Reference UID is required.";
-      if (!screenshotUrl) newErrors.screenshotUrl = "Payment screenshot proof is required.";
+      if (!screenshot) {
+        newErrors.screenshot = "Payment screenshot is required (max 500 KB: JPG, JPEG, PNG, WEBP).";
+      } else if (screenshot.size > 500 * 1024) {
+        newErrors.screenshot = `Screenshot is ${(screenshot.size / 1024).toFixed(0)} KB \u2014 maximum 500 KB. Please compress and re-select.`;
+      }
       if (!termsAccepted) newErrors.termsAccepted = "You must accept the terms to submit.";
     }
 
@@ -215,9 +229,17 @@ function RegisterForm() {
   const handleSubmitRegistration = async () => {
     if (!validateStep(6)) return;
     setIsSubmitting(true);
+    setSubmitStage("validating");
     setErrors({});
 
     try {
+      if (!screenshot) {
+        throw new Error("Payment screenshot is required (max 500 KB: JPG, JPEG, PNG, WEBP).");
+      }
+      if (screenshot.size > 500 * 1024) {
+        throw new Error(`Screenshot is ${(screenshot.size / 1024).toFixed(0)} KB \u2014 maximum 500 KB. Please compress and re-select.`);
+      }
+      setSubmitStage("submitting");
       const payload = {
         teamType,
         teamName,
@@ -225,7 +247,9 @@ function RegisterForm() {
         members,
         transactionId,
         utr,
-        screenshotUrl,
+        screenshotBase64: screenshot.base64,
+        screenshotMimeType: screenshot.mimeType,
+        screenshotSize: screenshot.size,
         honeypot,
         termsAccepted: true,
       };
@@ -242,6 +266,7 @@ function RegisterForm() {
         throw new Error(data.error || "Submission failed. Please check fields.");
       }
 
+      setSubmitStage("done");
       setSubmissionResult({
         registrationId: data.registrationId,
         lookupToken: data.lookupToken,
@@ -250,6 +275,9 @@ function RegisterForm() {
       sessionStorage.removeItem("wolf_reg_draft");
       setCurrentStep(7);
     } catch (err: unknown) {
+      // Form data is preserved — nothing is cleared, so the user can fix
+      // the error (e.g. compress the screenshot) and resubmit.
+      setSubmitStage("idle");
       const message = err instanceof Error ? err.message : "An error occurred during submission.";
       setErrors({ form: message });
     } finally {
@@ -622,10 +650,14 @@ function RegisterForm() {
                 error={errors.utr}
               />
 
+              {(submitStage === "validating" || submitStage === "submitting") && (
+                <p className="text-xs font-mono text-amber-400" role="status">
+                  {submitStage === "validating" ? "Validating screenshot (max 500 KB)\u2026" : "Submitting registration\u2026"}
+                </p>
+              )}
               <FileDropzone
-                label="Payment Screenshot Proof"
                 onFileSelect={handleScreenshot}
-                error={errors.screenshotUrl}
+                error={errors.screenshot}
               />
 
               <input
@@ -742,12 +774,12 @@ function RegisterForm() {
             ) : (
               <button
                 type="button"
-                disabled={isSubmitting || isUploading}
+                disabled={isSubmitting}
                 onClick={handleSubmitRegistration}
                 className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#E50914] hover:bg-[#C10712] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-[#E50914]/25 disabled:opacity-50"
               >
                 {isSubmitting ? (
-                  <span>Submitting Registration...</span>
+                  <span>{submitStage === "validating" ? "Validating\u2026" : "Submitting Registration..."}</span>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />

@@ -40,7 +40,7 @@ export default function AdminRegistrationsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [totalPages, setTotalPages] = React.useState(1);
+  const [, setTotalPages] = React.useState(1);
   const [registrations, setRegistrations] = React.useState<Registration[]>([]);
 
   const fetchRegistrations = React.useCallback(
@@ -95,7 +95,6 @@ export default function AdminRegistrationsPage() {
 
   // Debounced server-side search/filter — resets to page 1 (tick avoids set-state-in-effect)
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- debounced server-side search
     const t = setTimeout(() => { void fetchRegistrations({ resetPage: true }); }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

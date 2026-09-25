@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Entrance/exit utilities (animate-in, slide-in-from-*, fade-in, zoom-in, …).
+   Required by components/navbar.tsx and the drawer/accordion motion. */
+@import "tw-animate-css";
 
 :root {
   --background: #000000;
@@ -55,6 +58,15 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keep anchor targets clear of the sticky 4rem header when jumping to
+     #sections, so in-page links land on content instead of underneath it. */
+  scroll-padding-top: 5rem;
+}
+
+/* Belt-and-braces for browsers that ignore scroll-padding-top on the scroll
+   container: scroll-margin only affects programmatic scrolling, never layout. */
+[id] {
+  scroll-margin-top: 5rem;
 }
 
 body {
@@ -104,6 +116,375 @@ p {
 .bg-grid-cyberwolf {
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0);
   background-size: 24px 24px;
+}
+
+/* ==========================================================================
+   MOTION SYSTEM
+   Theme: "Brutal" (sharp/technical) — 0.75x scale, per the workspace motion
+   guide (.opencode/skills/hallmark/references/motion.md).
+   Rules: sharp ease-out only (no bounce/spring), animate transform + opacity
+   only (never layout props), and honour prefers-reduced-motion everywhere.
+   ========================================================================== */
+:root {
+  --ease-sharp: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+  --dur-reveal: 560ms;
+}
+
+/* Accessibility: opt out of all motion for users who ask for it. Declared
+   first so every rule below inherits the opt-out. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Scroll reveal.
+   The hidden state only applies once <Reveal /> has mounted and set
+   [data-motion="on"] on <html>, so with JS disabled (or before hydration)
+   content stays fully visible instead of being stuck at opacity: 0.
+   -------------------------------------------------------------------------- */
+html[data-motion="on"] .reveal {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}
+html[data-motion="on"] .reveal-x {
+  opacity: 0;
+  transform: translate3d(-20px, 0, 0);
+}
+html[data-motion="on"] .reveal-scale {
+  opacity: 0;
+  transform: scale(0.97);
+}
+.reveal,
+.reveal-x,
+.reveal-scale {
+  transition:
+    opacity var(--dur-reveal) var(--ease-entrance) var(--reveal-delay, 0ms),
+    transform var(--dur-reveal) var(--ease-entrance) var(--reveal-delay, 0ms);
+}
+html[data-motion="on"] .reveal.is-visible,
+html[data-motion="on"] .reveal-x.is-visible,
+html[data-motion="on"] .reveal-scale.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   Interactive surfaces
+   -------------------------------------------------------------------------- */
+/* Hover lift for cards/panels — GPU transform only, no layout thrash. */
+.lift {
+  transition:
+    transform var(--dur-base) var(--ease-sharp),
+    border-color var(--dur-base) var(--ease-sharp),
+    background-color var(--dur-base) var(--ease-sharp),
+    box-shadow var(--dur-base) var(--ease-sharp);
+}
+@media (hover: hover) {
+  .lift:hover {
+    transform: translate3d(0, -3px, 0);
+    box-shadow: 0 12px 32px -18px rgba(255, 0, 7, 0.55);
+  }
+}
+.lift:active { transform: translate3d(0, -1px, 0); }
+
+/* Link underline that sweeps in from the left. */
+.underline-sweep { position: relative; }
+.underline-sweep::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1.5px;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-base) var(--ease-sharp);
+}
+.underline-sweep:hover::after,
+.underline-sweep:focus-visible::after { transform: scaleX(1); }
+
+/* Keyboard focus that matches the theme (focus styles are never removed). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Accordion (FAQ): 0fr -> 1fr animates open without a hard-coded height and
+   without animating the `height` property itself.
+   -------------------------------------------------------------------------- */
+.accordion-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-base) var(--ease-sharp);
+}
+.accordion-panel[data-open="true"] { grid-template-rows: 1fr; }
+.accordion-panel > * { overflow: hidden; }
+
+/* --------------------------------------------------------------------------
+   Keyframes + utilities
+   -------------------------------------------------------------------------- */
+@keyframes cw-fade-up {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes cw-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes cw-tick {
+  0%   { opacity: 1; transform: translate3d(0, 0, 0); }
+  45%  { opacity: 0.3; transform: translate3d(0, -5px, 0); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes cw-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
+}
+
+.animate-fade-up { animation: cw-fade-up var(--dur-reveal) var(--ease-entrance) both; }
+.animate-fade-in { animation: cw-fade-in var(--dur-slow) var(--ease-sharp) both; }
+.animate-tick    { animation: cw-tick var(--dur-slow) var(--ease-sharp); }
+.animate-pulse-dot { animation: cw-pulse-dot 1800ms var(--ease-sharp) infinite; }
+
+/* --------------------------------------------------------------------------
+   Staggered page entrance.
+   Applied to the outer content wrapper of a page: each direct child rises in
+   sequence. Pure CSS (no JS timers, no per-child markup) and `both` fill keeps
+   everything visible afterwards. Delays are capped so long pages do not wait.
+   -------------------------------------------------------------------------- */
+html[data-motion="on"] .stagger > * {
+  animation: cw-fade-up var(--dur-reveal) var(--ease-entrance) both;
+}
+html[data-motion="on"] .stagger > *:nth-child(1) { animation-delay: 40ms; }
+html[data-motion="on"] .stagger > *:nth-child(2) { animation-delay: 100ms; }
+html[data-motion="on"] .stagger > *:nth-child(3) { animation-delay: 160ms; }
+html[data-motion="on"] .stagger > *:nth-child(4) { animation-delay: 220ms; }
+html[data-motion="on"] .stagger > *:nth-child(5) { animation-delay: 280ms; }
+html[data-motion="on"] .stagger > *:nth-child(n+6) { animation-delay: 330ms; }
+
+/* ==========================================================================
+   TEXT MOTION
+   Word-level mask reveal: every word sits inside an overflow-hidden clip and
+   rises up into place. <SplitText /> assigns --i per word, so the stagger is
+   pure CSS (no JS timers to clean up).
+   IMPORTANT: the hidden "from" state lives inside the keyframe, and the
+   animation only exists under html[data-motion="on"] -- so server-rendered
+   HTML, no-JS visitors and reduced-motion users all see plain visible text.
+   ========================================================================== */
+.t-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Room for descenders (g, y, p) so the clip never shaves a glyph. */
+  padding-bottom: 0.16em;
+  margin-bottom: -0.16em;
+}
+html[data-motion="on"] .t-word-mask > .t-word {
+  display: inline-block;
+  will-change: transform, opacity;
+  animation: cw-word-rise var(--dur-reveal) var(--ease-entrance) both;
+  animation-delay: calc(
+    var(--i, 0) * var(--word-stagger, 55ms) + var(--base-delay, 0ms)
+  );
+}
+@keyframes cw-word-rise {
+  from { opacity: 0; transform: translate3d(0, 110%, 0); }
+  55%  { opacity: 1; }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* One-shot light sheen across accent text. Deliberately NOT infinite: the
+   workspace motion guide forbids decorative loops. If the animation never
+   runs, the text simply renders as flat gradient-clipped accent colour. */
+.text-sheen {
+  background-image: linear-gradient(
+    100deg,
+    var(--primary) 0%,
+    var(--primary) 38%,
+    #ffffff 50%,
+    var(--primary) 62%,
+    var(--primary) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 110% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+html[data-motion="on"] .text-sheen {
+  animation: cw-sheen 1100ms var(--ease-sharp) 480ms both;
+}
+@keyframes cw-sheen {
+  from { background-position: 110% 0; }
+  to   { background-position: -60% 0; }
+}
+
+/* A rule/underline that draws itself in from the left. */
+html[data-motion="on"] .rule-grow {
+  transform-origin: left center;
+  animation: cw-rule-grow 720ms var(--ease-sharp) both;
+}
+@keyframes cw-rule-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* ==========================================================================
+   MARQUEE TICKER
+   A single narrow band of running keywords. Infinite by design (it is
+   content, not a decorative attention loop) and it pauses on hover. The
+   track holds the list twice, so translating -50% loops seamlessly.
+   ========================================================================== */
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+}
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: cw-marquee 34s linear infinite;
+}
+.marquee:hover .marquee__track { animation-play-state: paused; }
+@keyframes cw-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track { animation: none !important; }
+}
+
+/* ==========================================================================
+   SCROLL PROGRESS BAR
+   Driven by scaleX() (compositor-only) from components/scroll-progress.tsx.
+   No transition on transform: the scroll position already IS the easing, and
+   a transition would lag behind the thumb and feel rubbery.
+   ========================================================================== */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 60;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--primary), #ff5a5f);
+  box-shadow: 0 0 12px rgba(255, 0, 7, 0.55);
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   POINTER SPOTLIGHT
+   A static radial-gradient whose centre is moved by writing --mx/--my as CSS
+   custom properties (see components/pointer-spotlight.tsx). Only the gradient
+   is re-resolved — no layout, no paint of the surrounding page.
+   ========================================================================== */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 0, 7, 0.16),
+    transparent 70%
+  );
+  transition: opacity 240ms var(--ease-sharp);
+  pointer-events: none;
+}
+.spotlight:hover::before { opacity: 1; }
+/* Keep the surface's own content above the gradient layer. */
+.spotlight > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   POINTER TILT
+   3D tilt toward the cursor. Gated behind (hover: hover) so touch devices —
+   which have no cursor to track — are left completely alone.
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  .tilt {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform-style: preserve-3d;
+    transition: transform 260ms var(--ease-sharp);
+    will-change: transform;
+  }
+}
+
+/* ==========================================================================
+   MAGNETIC ATTRACTION
+   Small pull of the element toward the cursor. Clamped in JS (max 10px) so it
+   can never drag a control out of its own hit-area.
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  .magnetic {
+    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0);
+    transition: transform 220ms var(--ease-sharp);
+    will-change: transform;
+  }
+}
+
+/* ==========================================================================
+   SCROLL-DRIVEN HERO PARALLAX
+   Native CSS scroll-driven animation (`animation-timeline: scroll()`) — runs
+   OFF the main thread, so it stays at 60fps while React hydrates and never
+   fights the scroll handler. Progressive enhancement: wrapped in @supports, so
+   browsers without it (Firefox stable) simply get a static background.
+   Only runs when data-motion="on", which the inline script in app/layout.tsx
+   sets solely for users who have NOT asked for reduced motion.
+   ========================================================================== */
+@supports (animation-timeline: scroll()) {
+  html[data-motion="on"] .hero-parallax {
+    animation: cw-hero-parallax linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 85vh;
+    transform-origin: center top;
+  }
+}
+/* The over-scale must always exceed the downward shift, otherwise the shifted
+   image no longer covers the section box and a transparent strip appears along
+   the top edge (14% shift vs 8% over-scale left a 6% gap). At every point along
+   the timeline: scale headroom >= translateY.
+     start 0%   -> 0%   shift, 3% headroom
+     mid   4.5% -> 4.5% shift, 7% headroom
+     end   9%   -> 9%   shift, 11% headroom */
+@keyframes cw-hero-parallax {
+  from { transform: translate3d(0, 0, 0) scale(1.06); }
+  to   { transform: translate3d(0, 9%, 0) scale(1.22); }
 }
 
 /* Custom scrollbar */

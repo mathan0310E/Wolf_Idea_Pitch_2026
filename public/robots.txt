@@ -2,4 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://work-1-kwadbbpmppcfyzku.prod-runtime.all-hands.dev/sitemap.xml
+# ⚠️ ORGANIZER: Replace with your actual domain before go-live
+# Example: Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://your-domain.example/sitemap.xml

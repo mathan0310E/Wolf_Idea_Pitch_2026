@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { event } from "@/config/event";
-import { Clock, Calendar } from "lucide-react";
 
 export default function SchedulePage() {
   const scheduleItems = [
@@ -16,7 +15,7 @@ export default function SchedulePage() {
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white">
       <Navbar />
       <main className="flex-1 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 stagger">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#1E1E1E] text-xs font-mono text-[#E50914] border border-white/10">
               09 OCTOBER 2026

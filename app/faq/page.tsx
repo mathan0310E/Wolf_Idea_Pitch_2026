@@ -40,7 +40,7 @@ export default function FaqPage() {
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white">
       <Navbar />
       <main className="flex-1 py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 stagger">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#1E1E1E] text-xs font-mono text-[#E50914] border border-white/10">
               HELP & FAQ
@@ -61,21 +61,24 @@ export default function FaqPage() {
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-display font-bold text-base text-white hover:text-[#E50914] transition-colors"
+                  aria-expanded={openFaq === idx}
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-display font-bold text-base text-white hover:text-[#E50914] transition-colors duration-200"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown
                     className={cn(
-                      "w-5 h-5 text-zinc-400 transition-transform duration-200",
+                      "w-5 h-5 text-zinc-400 transition-transform duration-300 ease-out",
                       openFaq === idx && "transform rotate-180 text-[#E50914]"
                     )}
                   />
                 </button>
-                {openFaq === idx && (
+                {/* 0fr -> 1fr grid trick: animates open with no fixed height and
+                    without animating the `height` property (see globals.css). */}
+                <div className="accordion-panel" data-open={openFaq === idx}>
                   <div className="px-6 pb-6 text-sm text-zinc-400 leading-relaxed border-t border-white/5 pt-4">
                     {faq.a}
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>

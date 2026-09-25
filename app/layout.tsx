@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Aleo, Host_Grotesk, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { PointerMotion } from "@/components/pointer-motion";
+import { ScrollProgress } from "@/components/scroll-progress";
 import "./globals.css";
 
 const displayFont = Aleo({
@@ -38,9 +40,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://wolf-idea-pitch-2026.vercel.app"
-  ),
+  metadataBase: process.env.NEXT_PUBLIC_SITE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+    : undefined,
   applicationName: "WOLF IDEA PITCH 2026",
   appleWebApp: {
     capable: true,
@@ -95,9 +97,29 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
       className={`${displayFont.variable} ${bodyFont.variable} ${serifFont.variable} ${monoFont.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0A0A0A] text-white font-sans selection:bg-[#E50914] selection:text-white">
+        {/* Enable the motion styles on <html> before first paint so entrance
+            animations can never cause a flash of fully-visible content that
+            then jumps back to hidden. Use a <template> wrapper because React
+            doesn't execute <script> tags inside components on the client —
+            Next.js logs a dev-only notice for this, absent in production. */}
+        <template
+          dangerouslySetInnerHTML={{
+            __html:
+              `<script>try{if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-motion','on')}}catch(e){}<\/script>`,
+          }}
+        />
+        {/* Reading-progress bar. Global so every route gets it; renders as an
+            empty aria-hidden div that JS animates via transform: scaleX(). */}
+        <ScrollProgress />
+        {/* Single delegated pointer engine driving .spotlight / .tilt /
+            .magnetic everywhere. Renders nothing — it only publishes CSS
+            custom properties for surfaces already on the page. */}
+        <PointerMotion />
         {children}
       </body>
     </html>

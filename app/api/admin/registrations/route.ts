@@ -14,9 +14,15 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
+
     const search = (searchParams.get("search") || "").toLowerCase().trim();
     const status = (searchParams.get("status") || "ALL").toUpperCase();
-    const type = (searchParams.get("type") || "ALL").toLowerCase();
+    // NOTE: `type` is normalised to lowercase, so its "no filter" sentinel must
+    // be lowercase too. Comparing the lowercased value against "ALL" made
+    // `type !== "ALL"` true on EVERY request, so a `teamType === "all"` filter
+    // always ran and silently dropped every row: the admin dashboard, payments
+    // and registrations views all rendered an empty list.
+    const type = (searchParams.get("type") || "all").toLowerCase();
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
     const limit = Math.min(
       100,
@@ -44,7 +50,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (type !== "ALL") {
+    if (type !== "all") {
       regs = regs.filter((r) => r.teamType === type);
     }
 

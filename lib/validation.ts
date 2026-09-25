@@ -51,9 +51,20 @@ export const registrationFormSchema = z
       .string()
       .min(4, "UTR / Payment Ref must be at least 4 characters")
       .max(60, "UTR is too long"),
-    screenshotUrl: z
+    screenshotBase64: z
       .string()
-      .min(1, "Payment screenshot proof is required"),
+      .min(100, "Payment screenshot proof is required"),
+    screenshotMimeType: z.enum(["image/jpeg", "image/png", "image/webp"], {
+      message: "Only JPG, JPEG, PNG, and WEBP screenshots are accepted",
+    }),
+    screenshotSize: z
+      .number()
+      .int()
+      .min(1, "Payment screenshot proof is required")
+      .max(
+        500 * 1024,
+        "Payment screenshot must be 500 KB or smaller. Please compress the image and try again."
+      ),
     honeypot: z.string().max(0, "Bot detected").optional(),
     termsAccepted: z.literal(true, {
       message: "You must accept the terms and guidelines",

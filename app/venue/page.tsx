@@ -8,7 +8,7 @@ export default function VenuePage() {
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white">
       <Navbar />
       <main className="flex-1 py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 stagger">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#1E1E1E] text-xs font-mono text-[#E50914] border border-white/10">
               LOCATION & DIRECTIONS
@@ -69,20 +69,6 @@ export default function VenuePage() {
                   Directions
                 </a>
               </div>
-            </div>
-
-            <div className="rounded-xl bg-[#151515] border border-white/10 overflow-hidden">
-              <iframe
-                src={`https://www.google.com/maps?q=${encodeURIComponent(event.venueAddress)}&output=embed`}
-                width="100%"
-                height="380"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="WOLF IDEATHON 2026 venue map"
-                className="w-full h-[380px]"
-              />
             </div>
           </div>
         </div>

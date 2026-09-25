@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `wolf_ideathon_registrations_${Date.now()}.csv`;
+    a.download = `wolf_idea_pitch_registrations_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

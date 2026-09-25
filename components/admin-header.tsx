@@ -38,7 +38,7 @@ export function AdminHeader({ title }: { title: string }) {
         setMobileMenuOpen(false);
       }
     }
-  });
+  }, [pathname, mobileMenuOpen]);
 
   const router = useRouter();
   const handleLogout = () => {

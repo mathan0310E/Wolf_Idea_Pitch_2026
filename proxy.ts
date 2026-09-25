@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy() {
   const response = NextResponse.next();
 
   // Security Headers (§6)
@@ -29,8 +28,10 @@ export function middleware(request: NextRequest) {
     "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com data:",
     "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net",
-    "frame-src 'self' https://www.google.com https://maps.google.com",
-    "frame-ancestors 'none'",
+"frame-src 'self' https://www.google.com https://maps.google.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
   ].join("; ");
 
   response.headers.set("Content-Security-Policy", csp);

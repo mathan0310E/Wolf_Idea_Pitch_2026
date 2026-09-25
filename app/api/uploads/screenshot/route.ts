@@ -1,110 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
-import { adminStorage, isFirebaseAdminReal, resolveStorageBucketName } from "@/lib/firebase-admin";
-
-const MAX_BYTES = 5 * 1024 * 1024; // 5MB — matches FileDropzone client guard
-const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
+import { NextResponse } from "next/server";
 
 /**
- * POST /api/uploads/screenshot
- * Body: { fileName?: string, dataUrl: "data:image/...;base64,..." }
+ * POST /api/uploads/screenshot — REMOVED.
  *
- * Validates type/size server-side, stores the file in Firebase Storage
- * (payment-screenshots/) via the Admin SDK, and returns a long-lived
- * read URL for the caller to attach to the registration payload.
- *
- * Dev/mock mode (no Admin SDK credentials): echoes the data URL back so the
- * full flow can be tested end-to-end without Firebase. Production Firestore
- * documents must NEVER embed multi-MB data URLs (1 MiB doc limit) — the
- * submit route rejects oversized inline screenshots when real Firebase is
- * configured.
+ * Payment screenshots are no longer uploaded to Firebase Storage. The
+ * registration form sends the validated ≤500 KB image as Base64 inside the
+ * POST /api/registrations/submit payload, which stores it in a dedicated
+ * Firestore `payments` document (see submit/route.ts). This endpoint now
+ * always returns 410 Gone so old clients fail loudly instead of silently
+ * losing proof of payment.
  */
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { fileName, dataUrl } = body as {
-      fileName?: string;
-      dataUrl?: string;
-    };
-
-    if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) {
-      return NextResponse.json(
-        { error: "No screenshot image provided." },
-        { status: 400 }
-      );
-    }
-
-    const match = dataUrl.match(/^data:(image\/(jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
-    if (!match) {
-      return NextResponse.json(
-        { error: "Only JPG, PNG, and WEBP screenshots are accepted." },
-        { status: 400 }
-      );
-    }
-
-    const mime = match[1];
-    if (!ALLOWED_MIME.has(mime)) {
-      return NextResponse.json(
-        { error: "Only JPG, PNG, and WEBP screenshots are accepted." },
-        { status: 400 }
-      );
-    }
-
-    const buffer = Buffer.from(match[3], "base64");
-    if (buffer.length === 0 || buffer.length > MAX_BYTES) {
-      return NextResponse.json(
-        { error: "Screenshot must be a non-empty image under 5MB." },
-        { status: 400 }
-      );
-    }
-
-    // Dev/mock fallback — no Storage bucket available. In production this
-    // must be a hard failure: a fake success URL would corrupt the record.
-    if (!isFirebaseAdminReal()) {
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json(
-          { error: "Upload service is temporarily unavailable. Please try again later." },
-          { status: 503 }
-        );
-      }
-      return NextResponse.json({
-        success: true,
-        url: dataUrl,
-        path: null,
-        storage: "inline-dev",
-      });
-    }
-
-        const safeName = (fileName || "screenshot.png")
-      .replace(/[^a-zA-Z0-9._-]/g, "_")
-      .slice(0, 80);
-    const path = `payment-screenshots/${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 8)}/${safeName}`;
-
-    const bucketName = await resolveStorageBucketName();
-    const bucket = adminStorage.bucket(bucketName);
-    const file = bucket.file(path);
-    await file.save(buffer, {
-      metadata: { contentType: mime },
-    });
-
-    const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: "2036-10-09",
-    });
-
-    return NextResponse.json({ success: true, url: signedUrl, path });
-  } catch (error) {
-    console.error("Screenshot Upload Error:", error);
-    return NextResponse.json(
-      {
-        error:
-          "Failed to upload screenshot. Please try again." +
-          (process.env.NODE_ENV !== "production" && error instanceof Error
-            ? ` [dev-detail: ${error.message}]`
-            : ""),
-      },
-      { status: 500 }
-    );
-  }
+export async function POST() {
+  return NextResponse.json(
+    {
+      error:
+        "Screenshot upload endpoint removed. Submit the payment screenshot with your registration instead.",
+    },
+    { status: 410 }
+  );
 }

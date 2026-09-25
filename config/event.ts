@@ -59,40 +59,69 @@ export const event = {
   shortName: "WOLF IDEA PITCH 2026",
   tagline: "LEARN • SECURE • BUILD",
   date: "2026-10-09",
-  venue: "Cyber Wolf",
+  venue: "Cyber Wolf HQ",
   city: "Tiruvannamalai, Tamil Nadu",
-  venueAddress: "No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu – 606601, India",
+  venueAddress:
+    "No. 3A, 10th Street, Gandhi Nagar, Tiruvannamalai, Tamil Nadu – 606601, India",
   contact: {
     phone: "+91 63798 69678",
     email: "info@cyberwolf360.in",
     whatsapp: "+91 78259 88139",
   },
   payment: {
-    upiId: "[UPI ID]",
-    beneficiaryName: "[RECEIVER NAME]",
+    // ⚠️ ORGANIZER: Replace with your actual UPI ID before go-live.
+    // Format: `yourname@bank` or `mobile@bank`.
+    // Example: `cyberwolf360@oksbi`
+    upiId: "[UPI_ID_REPLACE_ME]",
+    // ⚠️ ORGANIZER: Replace with the beneficiary name as it appears on the
+    // bank account. This is shown to registrants for verification.
+    beneficiaryName: "[BENEFICIARY_NAME_REPLACE_ME]",
     currency: "INR",
   },
   registration: {
-    open: false,
+    open: true,
     announcement:
-      "Registrations will open soon. Follow @[SOCIAL HANDLE] for updates.",
+      "Registrations are currently closed. For updates, contact info@cyberwolf360.in or +91 63798 69678.",
     idPrefix: "WOLF-2026",
   },
   socials: {
-    instagram: "[INSTAGRAM URL]",
-    linkedin: "[LINKEDIN URL]",
+    // ⚠️ ORGANIZER: Replace with your actual social media profile URLs.
+    instagram: "[INSTAGRAM_URL_REPLACE_ME]",
+    linkedin: "[LINKEDIN_URL_REPLACE_ME]",
   },
   themes: [
-    { id: "theme-1", title: "[THEME 1]", description: "[THEME DESCRIPTION]" },
-    { id: "theme-2", title: "[THEME 2]", description: "[THEME DESCRIPTION]" },
-    { id: "theme-3", title: "[THEME 3]", description: "[THEME DESCRIPTION]" },
-    { id: "theme-4", title: "[THEME 4]", description: "[THEME DESCRIPTION]" },
+    // ⚠️ ORGANIZER: Replace theme titles and descriptions with your actual
+    // hackathon themes. These are displayed on /themes and in the registration
+    // domain dropdown.
+    {
+      id: "theme-1",
+      title: "[THEME 1 TITLE - REPLACE ME]",
+      description: "[THEME 1 DESCRIPTION - REPLACE ME]",
+    },
+    {
+      id: "theme-2",
+      title: "[THEME 2 TITLE - REPLACE ME]",
+      description: "[THEME 2 DESCRIPTION - REPLACE ME]",
+    },
+    {
+      id: "theme-3",
+      title: "[THEME 3 TITLE - REPLACE ME]",
+      description: "[THEME 3 DESCRIPTION - REPLACE ME]",
+    },
+    {
+      id: "theme-4",
+      title: "[THEME 4 TITLE - REPLACE ME]",
+      description: "[THEME 4 DESCRIPTION - REPLACE ME]",
+    },
   ],
   schedule: {
-    checkIn: "[SCHEDULE TBD]",
-    opening: "[SCHEDULE TBD]",
-    hackathonStart: "[SCHEDULE TBD]",
-    hackathonEnd: "[SCHEDULE TBD]",
-    results: "[SCHEDULE TBD]",
+    // ⚠️ ORGANIZER: Replace with your actual event schedule. These are
+    // displayed on /schedule. Use 12-hour format with AM/PM for clarity.
+    // Example: "08:30 AM - 09:30 AM"
+    checkIn: "[SCHEDULE CHECK-IN - REPLACE ME]",
+    opening: "[SCHEDULE OPENING CEREMONY - REPLACE ME]",
+    hackathonStart: "[SCHEDULE HACKATHON START - REPLACE ME]",
+    hackathonEnd: "[SCHEDULE HACKATHON END - REPLACE ME]",
+    results: "[SCHEDULE RESULTS & VALEDICTORY - REPLACE ME]",
   },
 } as const;

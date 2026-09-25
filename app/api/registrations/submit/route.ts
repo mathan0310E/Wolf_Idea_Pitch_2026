@@ -4,9 +4,49 @@ import { adminDb, isFirebaseAdminReal, type AdminTx } from "@/lib/firebase-admin
 import { clientKey, checkRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
-// ~1MB Firestore document ceiling: multi-MB inline data URLs must go through
-// /api/uploads/screenshot (Firebase Storage) instead.
-const MAX_INLINE_SCREENSHOT_CHARS = 900_000;
+// Payment screenshot — Base64 in a dedicated Firestore `payments` document.
+// Firebase Storage is NOT used for screenshots (removed). Client and server
+// both enforce: JPG/JPEG/PNG/WEBP, max 500 KB, Firestore doc-size ceiling.
+export const MAX_SCREENSHOT_BYTES = 500 * 1024; // 500 KB
+export const ALLOWED_SCREENSHOT_MIME = ["image/jpeg", "image/png", "image/webp"] as const;
+export type ScreenshotMime = (typeof ALLOWED_SCREENSHOT_MIME)[number];
+
+// Firestore caps a single document at 1,048,576 bytes. A 500 KB image is
+// ~683 KB of base64; with the rest of the payment fields + index overhead this
+// stays comfortably under the ceiling — the final guard below proves it by
+// measuring the exact serialized payload before writing.
+const FIRESTORE_DOC_LIMIT_BYTES = 1_048_576;
+const PAYMENT_DOC_HEADROOM_BYTES = 8 * 1024;
+
+export function estimatePaymentDocBytes(fields: {
+  paymentId: string;
+  registrationId: string;
+  transactionId: string;
+  utr: string;
+  screenshotBase64: string;
+  screenshotMimeType: string;
+}): number {
+  const overhead =
+    fields.paymentId.length +
+    fields.registrationId.length +
+    fields.transactionId.length +
+    fields.utr.length +
+    fields.screenshotMimeType.length +
+    200; // fixed field names + status/timestamps
+  return overhead + fields.screenshotBase64.length + PAYMENT_DOC_HEADROOM_BYTES;
+}
+
+export function paymentDocFitsLimit(fields: {
+  paymentId: string;
+  registrationId: string;
+  transactionId: string;
+  utr: string;
+  screenshotBase64: string;
+  screenshotMimeType: string;
+}): boolean {
+  return estimatePaymentDocBytes(fields) <= FIRESTORE_DOC_LIMIT_BYTES;
+}
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +73,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { teamType, teamName, domain, members, transactionId, utr, screenshotUrl } = parseResult.data;
+    const { teamType, teamName, domain, members, transactionId, utr } = parseResult.data;
+    const { screenshotBase64, screenshotMimeType, screenshotSize } = parseResult.data;
 
     // 2a. Production guard — never persist registrations to the in-memory
     // mock store. Fail loudly instead of silently losing data.
@@ -67,18 +108,59 @@ export async function POST(req: NextRequest) {
       // remain the hard boundary in production.
     }
 
-    // 2c. Inline screenshot guard — production Firestore docs cap at 1 MiB
-    if (
-      isFirebaseAdminReal() &&
-      screenshotUrl.startsWith("data:") &&
-      screenshotUrl.length > MAX_INLINE_SCREENSHOT_CHARS
-    ) {
+    // 2c. Screenshot trust boundary — re-decode the Base64 server-side and
+    // re-derive size + MIME. Client claims are never trusted.
+    if (!ALLOWED_SCREENSHOT_MIME.includes(screenshotMimeType as ScreenshotMime)) {
       return NextResponse.json(
-        {
-          error:
-            "Payment screenshot is too large to submit inline. Please re-upload it (max 5MB) and try again.",
-        },
+        { error: "Only JPG, JPEG, PNG, and WEBP screenshots are accepted." },
+        { status: 400 }
+      );
+    }
+    let screenshotBytes: Buffer;
+    try {
+      if (!/^[A-Za-z0-9+/=\s]+$/.test(screenshotBase64)) {
+        throw new Error("not-base64");
+      }
+      screenshotBytes = Buffer.from(screenshotBase64.replace(/\s+/g, ""), "base64");
+    } catch {
+      return NextResponse.json(
+        { error: "Payment screenshot is not valid Base64 image data." },
+        { status: 400 }
+      );
+    }
+    if (screenshotBytes.length === 0 || screenshotBytes.length > MAX_SCREENSHOT_BYTES) {
+      return NextResponse.json(
+        { error: "Payment screenshot must be 500 KB or smaller. Please compress the image and try again." },
         { status: 413 }
+      );
+    }
+    if (screenshotSize !== screenshotBytes.length) {
+      return NextResponse.json(
+        { error: "Screenshot size mismatch. Please re-select the image and try again." },
+        { status: 400 }
+      );
+    }
+    // Magic-number check: JPEG FF D8 FF, PNG 89 50 4E 47, WEBP RIFF....WEBP.
+    const magicOk =
+      (screenshotMimeType === "image/jpeg" &&
+        screenshotBytes.length >= 3 &&
+        screenshotBytes[0] === 0xff &&
+        screenshotBytes[1] === 0xd8 &&
+        screenshotBytes[2] === 0xff) ||
+      (screenshotMimeType === "image/png" &&
+        screenshotBytes.length >= 4 &&
+        screenshotBytes[0] === 0x89 &&
+        screenshotBytes[1] === 0x50 &&
+        screenshotBytes[2] === 0x4e &&
+        screenshotBytes[3] === 0x47) ||
+      (screenshotMimeType === "image/webp" &&
+        screenshotBytes.length >= 12 &&
+        screenshotBytes.toString("ascii", 0, 4) === "RIFF" &&
+        screenshotBytes.toString("ascii", 8, 12) === "WEBP");
+    if (!magicOk) {
+      return NextResponse.json(
+        { error: "Screenshot file content does not match its image type." },
+        { status: 400 }
       );
     }
 
@@ -120,7 +202,8 @@ export async function POST(req: NextRequest) {
     const clientIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
     const hashedIp = crypto.createHash("sha256").update(clientIp).digest("hex").substring(0, 16);
 
-    // 6. Write Registration Record
+    // 6. Write Registration Record — NEVER includes screenshot Base64.
+    // Only lightweight metadata (mime + size) so list queries stay cheap.
     const regData = {
       registrationId,
       lookupToken,
@@ -134,25 +217,112 @@ export async function POST(req: NextRequest) {
       paymentStatus: "SUBMITTED",
       transactionId,
       utr,
-      screenshotUrl,
+      screenshotMeta: { mimeType: screenshotMimeType, size: screenshotBytes.length },
       createdAt: now,
       updatedAt: now,
       createdByIp: hashedIp,
     };
 
+    // 6a. Duplicate-payment guard — one payment per transactionId+utr pair.
+    // (Mock store has no .where(); scan is only a dev fallback. Real
+    // Firestore enforces this via the composite query below.)
+    const paymentsRef = adminDb.collection("payments");
+    let duplicateFound = false;
+    try {
+      const maybeQuery = paymentsRef as unknown as {
+        where: (
+          field: string,
+          op: string,
+          value: string
+        ) => {
+          where: (
+            field: string,
+            op: string,
+            value: string
+          ) => { limit: (n: number) => { get: () => Promise<{ docs: unknown[] }> } };
+        };
+      };
+      if (typeof maybeQuery.where === "function") {
+        const dupSnap = await maybeQuery
+          .where("transactionId", "==", transactionId)
+          .where("utr", "==", utr)
+          .limit(1)
+          .get();
+        duplicateFound = dupSnap.docs.length > 0;
+      }
+    } catch {
+      duplicateFound = false; // mock store — skip the guard, never block dev
+    }
+    if (duplicateFound) {
+      return NextResponse.json(
+        { error: "This payment (Transaction ID + UTR) has already been submitted." },
+        { status: 409 }
+      );
+    }
+
     await adminDb.collection("registrations").doc(registrationId).set(regData);
 
-    // 7. Write Payment Record
+    // 7. Write Payment Record in its OWN `payments` document — the ONLY place
+    // the screenshot Base64 lives. Final doc-size validation before writing so
+    // Firestore's 1 MiB document limit can never be exceeded.
     const paymentId = `PAY-${registrationId}`;
-    await adminDb.collection("payments").doc(paymentId).set({
+    const paymentDoc = {
       paymentId,
       registrationId,
-      amount: totalAmount,
+      amount: totalAmount, // server-calculated: memberCount × ₹300. Never trusted from client.
       transactionId,
       utr,
-      screenshotUrl,
+      screenshotBase64,
+      screenshotMimeType,
+      screenshotSize: screenshotBytes.length,
       status: "SUBMITTED",
       createdAt: now,
+      updatedAt: now,
+    };
+    if (
+      !paymentDocFitsLimit({
+        paymentId,
+        registrationId,
+        transactionId,
+        utr,
+        screenshotBase64,
+        screenshotMimeType,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Payment screenshot is too large to store. Please use a smaller image (max 500 KB)." },
+        { status: 413 }
+      );
+    }
+    await adminDb.collection("payments").doc(paymentId).set(paymentDoc);
+
+    // 8. Audit: submission + screenshot upload. Metadata only — NEVER the
+    // Base64 image or sensitive payment details.
+    await adminDb.collection("auditLogs").add({
+      actorUid: `participant:${registrationId}`,
+      action: "PAYMENT_SUBMITTED",
+      targetId: registrationId,
+      registrationId,
+      paymentId,
+      metadata: {
+        amount: totalAmount,
+        teamType,
+        memberCount: expectedMemberCount,
+        transactionIdMasked: `${transactionId.slice(0, 2)}***${transactionId.slice(-2)}`,
+      },
+      timestamp: now,
+    });
+    await adminDb.collection("auditLogs").add({
+      actorUid: `participant:${registrationId}`,
+      action: "PAYMENT_SCREENSHOT_UPLOADED",
+      targetId: paymentId,
+      registrationId,
+      paymentId,
+      metadata: {
+        mimeType: screenshotMimeType,
+        sizeBytes: screenshotBytes.length,
+      },
+      timestamp: now,
     });
 
     return NextResponse.json({

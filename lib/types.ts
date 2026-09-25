@@ -44,7 +44,13 @@ export interface Registration {
   createdByIp?: string; // Hashed IP
   utr?: string;
   transactionId?: string;
-  screenshotUrl?: string;
+  // NEVER store screenshot Base64 here — it lives in the separate
+  // `payments` document (PAY-{registrationId}). Only lightweight metadata.
+  screenshotUrl?: string; // legacy: Storage URL / inline data URL (old records only)
+  screenshotMeta?: {
+    mimeType: string;
+    size: number; // bytes
+  };
   rejectionReason?: string;
 }
 
@@ -55,21 +61,31 @@ export interface Payment {
   amount: number;
   transactionId: string;
   utr: string;
-  screenshotUrl: string;
+  // Screenshot lives ONLY here — never in the registration document and
+  // never in list feeds. Fetched on demand via
+  // GET /api/admin/payments/screenshot only.
+  screenshotBase64: string; // raw base64 (no data: prefix)
+  screenshotMimeType: string; // image/jpeg | image/png | image/webp
+  screenshotSize: number; // bytes
   status: PaymentStatus;
   rejectionReason?: string;
   verifiedBy?: string;
   verifiedAt?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuditLog {
   id?: string;
   actorUid: string;
+  actorEmail?: string;
   action: string;
   targetId: string;
+  registrationId?: string;
+  paymentId?: string;
   before?: Record<string, unknown>;
   after?: Record<string, unknown>;
+  metadata?: Record<string, unknown>; // NEVER base64 / secrets
   timestamp: string;
 }
 
