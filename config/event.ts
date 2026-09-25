@@ -72,10 +72,10 @@ export const event = {
     // ⚠️ ORGANIZER: Replace with your actual UPI ID before go-live.
     // Format: `yourname@bank` or `mobile@bank`.
     // Example: `cyberwolf360@oksbi`
-    upiId: "[UPI_ID_REPLACE_ME]",
+    upiId: "8610259832-2@ybl",
     // ⚠️ ORGANIZER: Replace with the beneficiary name as it appears on the
     // bank account. This is shown to registrants for verification.
-    beneficiaryName: "[BENEFICIARY_NAME_REPLACE_ME]",
+    beneficiaryName: "Mathan kumar. S",
     currency: "INR",
   },
   registration: {
@@ -86,32 +86,59 @@ export const event = {
   },
   socials: {
     // ⚠️ ORGANIZER: Replace with your actual social media profile URLs.
-    instagram: "[INSTAGRAM_URL_REPLACE_ME]",
-    linkedin: "[LINKEDIN_URL_REPLACE_ME]",
+    instagram: "https://www.instagram.com/cyber_wolf_team",
+    linkedin: "https://www.linkedin.com/company/cyberwolf-team",
   },
   themes: [
-    // ⚠️ ORGANIZER: Replace theme titles and descriptions with your actual
-    // hackathon themes. These are displayed on /themes and in the registration
-    // domain dropdown.
     {
       id: "theme-1",
-      title: "[THEME 1 TITLE - REPLACE ME]",
-      description: "[THEME 1 DESCRIPTION - REPLACE ME]",
+      title: "Cyber Defense & Threat Intelligence 🛡️",
+      description: "Detect and respond to cyber threats.",
     },
     {
       id: "theme-2",
-      title: "[THEME 2 TITLE - REPLACE ME]",
-      description: "[THEME 2 DESCRIPTION - REPLACE ME]",
+      title: "AI × Cybersecurity 🤖",
+      description: "Use AI to solve security problems.",
     },
     {
       id: "theme-3",
-      title: "[THEME 3 TITLE - REPLACE ME]",
-      description: "[THEME 3 DESCRIPTION - REPLACE ME]",
+      title: "Application & Cloud Security 🔐",
+      description: "Build secure apps, APIs, and cloud systems.",
     },
     {
       id: "theme-4",
-      title: "[THEME 4 TITLE - REPLACE ME]",
-      description: "[THEME 4 DESCRIPTION - REPLACE ME]",
+      title: "IoT & Embedded Security 🌐",
+      description: "Protect connected and smart devices.",
+    },
+    {
+      id: "theme-5",
+      title: "Digital Safety & Privacy 🧠",
+      description: "Protect users, identities, and personal data.",
+    },
+    {
+      id: "theme-6",
+      title: "Cybercrime & Fraud Prevention 🚨",
+      description: "Detect scams, fraud, and malicious activity.",
+    },
+    {
+      id: "theme-7",
+      title: "Industrial & Critical Infrastructure Security 🏭",
+      description: "Secure industries, energy, and infrastructure.",
+    },
+    {
+      id: "theme-8",
+      title: "DevSecOps & Infrastructure Security ☁️",
+      description: "Integrate security into software and infrastructure.",
+    },
+    {
+      id: "theme-9",
+      title: "Identity & Access Security 🔑",
+      description: "Improve authentication, authorization, and Zero Trust.",
+    },
+    {
+      id: "theme-10",
+      title: "Open Cyber Innovation 💡",
+      description: "Any innovative idea with a cybersecurity focus.",
     },
   ],
   schedule: {
