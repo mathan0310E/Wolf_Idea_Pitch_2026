@@ -2,20 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomInt, createHash } from "node:crypto";
 import { requireAdminIdentity } from "@/lib/admin-auth";
 import { adminDb } from "@/lib/firebase-admin";
-import { sendAdminOtpEmail, mailDeliveryAvailable } from "@/lib/mailer";
-
-/**
- * Admin 2FA step 1 — email OTP delivery.
- *
- * POST /api/admin/otp/send  (Bearer Firebase ID token)
- * The caller must ALREADY pass requireAdminIdentity() (valid ID token,
- * verified email, ADMIN_EMAILS allowlist), so this endpoint can never be used
- * as an unauthenticated mail-bombing relay. A 6-digit code is generated,
- * stored hashed (sha256) in Firestore `otp_tokens/{uid}` with a 5-minute TTL,
- * and emailed via the Firebase Trigger Email extension (Firestore `mail`
- * queue — see lib/mailer.ts). Delivery is audited (OTP_SENT) without ever storing
- * or logging the plaintext code.
- */
+import { MAIL_PROVIDER, MailDeliveryError, sendAdminOtpEmail, mailDeliveryAvailable } from "@/lib/mailer";
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -28,6 +15,11 @@ interface OtpDoc {
   delete: () => Promise<void>;
 }
 
+// Delivery is synchronous with nodemailer: `transporter.sendMail()` resolves
+// only after the SMTP server accepted the message, so there is nothing to poll.
+// The former `GET /api/admin/otp/send?mailId=...` delivery-status endpoint is
+// therefore gone — POST returns the outcome and `otp_tokens/{uid}` records it.
+
 export async function POST(req: NextRequest) {
   const auth = await requireAdminIdentity(req);
   if ("error" in auth) return auth.error;
@@ -35,19 +27,22 @@ export async function POST(req: NextRequest) {
 
   if (!mailDeliveryAvailable() && process.env.NODE_ENV === "production") {
     return NextResponse.json(
-      { error: "Email delivery is not configured (Firebase Trigger Email extension). Admin sign-in is unavailable." },
+      {
+        error: "Email delivery is not configured. Admin sign-in is unavailable.",
+      },
       { status: 503 }
     );
   }
 
+  const ref = adminDb.collection("otp_tokens").doc(uid) as unknown as OtpDoc;
+  let tokenStored = false;
+
   try {
-    const ref = adminDb.collection("otp_tokens").doc(uid) as unknown as OtpDoc;
     const snap = await ref.get();
     const existing = snap.exists ? snap.data() : undefined;
 
-    // Resend cooldown: one code per minute per admin.
     if (existing && typeof existing.createdAt === "string") {
-      const age = Date.now() - new Date(existing.createdAt as string).getTime();
+      const age = Date.now() - new Date(existing.createdAt).getTime();
       if (age >= 0 && age < RESEND_COOLDOWN_MS) {
         return NextResponse.json(
           { error: "A code was just sent. Check the inbox or wait a minute to resend." },
@@ -66,29 +61,92 @@ export async function POST(req: NextRequest) {
       attempts: 0,
       email: email ?? "",
     });
+    tokenStored = true;
 
     const mail = await sendAdminOtpEmail(email ?? "", code);
 
-    await adminDb.collection("auditLogs").add({
-      actorUid: uid,
-      action: "OTP_SENT",
-      targetId: `otp_tokens/${uid}`,
-      after: { email: email ?? "", delivered: mail.delivered, ttlMinutes: 5 },
-      timestamp: now,
-    });
+    if (mail.sent) {
+      try {
+        await ref.update({
+          delivery: {
+            provider: MAIL_PROVIDER,
+            state: mail.delivery,
+            attempts: 1,
+            messageId: mail.messageId,
+            sentAt: now,
+          },
+        });
+      } catch (error) {
+        console.error("Admin OTP delivery metadata update failed:", error);
+      }
+    }
+
+    try {
+      await adminDb.collection("auditLogs").add({
+        actorUid: uid,
+        action: "OTP_SENT",
+        targetId: `otp_tokens/${uid}`,
+        after: {
+          email: email ?? "",
+          sent: mail.sent,
+          delivery: mail.delivery,
+          messageId: mail.messageId,
+          ttlMinutes: 5,
+        },
+        timestamp: now,
+      });
+    } catch (error) {
+      console.error("Admin OTP audit write failed:", error);
+    }
 
     return NextResponse.json({
       success: true,
       email,
-      delivered: mail.delivered,
+      sent: mail.sent,
+      delivered: mail.delivery === "SUCCESS",
+      messageId: mail.sent ? mail.messageId : null,
+      delivery: mail.delivery,
       devNotice: mail.devNotice,
     });
   } catch (error) {
-    console.error("Admin OTP Send Error:", error);
-    const msg = error instanceof Error ? error.message : "";
-    if (msg.startsWith("firebase-mail-unavailable") || msg.startsWith("smtp-unconfigured")) {
-      return NextResponse.json({ error: "Email delivery is not configured." }, { status: 503 });
+    if (tokenStored) {
+      try {
+        await ref.delete();
+      } catch (cleanupError) {
+        console.error("Admin OTP token cleanup failed:", cleanupError);
+      }
     }
+
+    if (error instanceof MailDeliveryError) {
+      try {
+        await adminDb.collection("auditLogs").add({
+          actorUid: uid,
+          action: "OTP_SEND_FAILED",
+          targetId: `otp_tokens/${uid}`,
+          after: {
+            email: email ?? "",
+            reason: error.message.slice(0, 200),
+            ttlMinutes: 5,
+          },
+          timestamp: new Date().toISOString(),
+        });
+      } catch (auditError) {
+        console.error("Admin OTP failure audit write failed:", auditError);
+      }
+
+      console.error("Admin OTP delivery failed:", error.message, error.statusCode);
+      return NextResponse.json(
+        {
+          error:
+            error.statusCode === 503
+              ? "Email delivery is temporarily unavailable. Please try again shortly."
+              : "Could not send the verification code. Please try again.",
+        },
+        { status: error.statusCode }
+      );
+    }
+
+    console.error("Admin OTP Send Error:", error);
     return NextResponse.json(
       { error: "Could not send the verification code. Please try again." },
       { status: 500 }

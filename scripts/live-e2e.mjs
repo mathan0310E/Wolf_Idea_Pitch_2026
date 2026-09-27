@@ -33,11 +33,13 @@ function record(name, ok, detail = "") {
 const note = (s) => { notes.push(s); console.log("INFO  " + s); };
 const mask = (s) => (typeof s === "string" && s.length > 4 ? s.slice(0, 4) + "..." + s.slice(-2) : "...");
 
-async function req(method, p, { token, body } = {}) {
+async function req(method, p, { token, body, cookie, manualRedirect } = {}) {
   const res = await fetch(BASE + p, {
     method,
+    redirect: manualRedirect ? "manual" : "follow",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -45,8 +47,18 @@ async function req(method, p, { token, body } = {}) {
   const text = await res.text();
   let json;
   try { json = JSON.parse(text); } catch { json = undefined; }
-  return { status: res.status, text, json };
+  return {
+    status: res.status,
+    text,
+    json,
+    location: res.headers.get("location"),
+    robots: res.headers.get("x-robots-tag"),
+    setCookie: res.headers.getSetCookie(),
+  };
 }
+
+const isGateRedirect = (r) =>
+  (r.status === 307 || r.status === 308) && String(r.location || "").includes("/admin/login");
 
 // ---- env + admin SDK -------------------------------------------------------
 const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
@@ -211,30 +223,39 @@ let hadFreshOtp = false;
         record("ID token alone is NOT enough - session 403 'two-factor verification required'",
           s1.status === 403 && /two-factor/i.test(s1.text), `${s1.status} ${s1.text.slice(0, 90)}`);
       }
+
+      const gateLocked = await req("GET", "/admin/dashboard", { manualRedirect: true });
+      record("admin HTML is server-gated (no gate cookie -> redirect to login)",
+        isGateRedirect(gateLocked),
+        `${gateLocked.status} location=${gateLocked.location} x-robots-tag=${gateLocked.robots}`);
     }
   }
 }
 
 // ---- 5. email OTP 2FA round trip (checklist item 3, second half) -----------
-const mailCount = async () => {
-  try { return (await db.collection("mail").count().get()).data().count; } catch { return null; }
-};
 let otpCode = null;
 if (idToken && adminUid) {
-  const mailBefore = await mailCount();
   const sent = await req("POST", "/api/admin/otp/send", { token: idToken });
-  record("otp/send 200 + delivered:true", sent.status === 200 && sent.json?.delivered === true,
-    `${sent.status} delivered=${sent.json?.delivered}`);
-
-  const mailAfter = await mailCount();
-  record("  a mail/{id} doc was queued for the Trigger Email extension",
-    mailBefore === null || mailAfter === null ? "info" : mailAfter === mailBefore + 1,
-    `mail docs ${mailBefore} -> ${mailAfter} (the extension performs the actual send)`);
+  record("otp/send 200 + SMTP accepted",
+    sent.status === 200 && sent.json?.sent === true && sent.json?.delivery === "SUCCESS",
+    `${sent.status} sent=${sent.json?.sent} delivery=${sent.json?.delivery}`);
 
   const otpDoc = (await db.collection("otp_tokens").doc(adminUid).get()).data();
-  record("  otp_tokens/{uid} holds a salted hash, never the plaintext code",
+  record("  otp_tokens/{uid} stores SMTP delivery metadata",
+    otpDoc?.delivery?.provider === "smtp" && otpDoc?.delivery?.state === "SUCCESS" &&
+    typeof otpDoc?.delivery?.messageId === "string" && otpDoc.code === undefined,
+    `expiresAt=${otpDoc?.expiresAt} attempts=${otpDoc?.attempts} messageId=${Boolean(otpDoc?.delivery?.messageId)}`);
+  record("  otp_tokens/{uid} holds a uid-salted hash, never the plaintext code",
     typeof otpDoc?.codeHash === "string" && otpDoc.codeHash.length === 64 && otpDoc.code === undefined,
     `expiresAt=${otpDoc?.expiresAt} attempts=${otpDoc?.attempts}`);
+
+  // SMTP delivery is synchronous (sendMail resolves after the server's 250), so
+  // there is nothing to poll: the old delivery-status GET is retired by design.
+  // A POST-only route answers 405 (Allow: POST); 404 is accepted too, in case a
+  // later refactor moves the endpoint instead of dropping it.
+  const poll = await req("GET", "/api/admin/otp/send?mailId=x", { token: idToken });
+  record("  retired delivery-status polling endpoint is gone",
+    poll.status === 405 || poll.status === 404, `${poll.status}`);
 
   if (typeof otpDoc?.codeHash === "string") {
     // The code is only recoverable by hashing the 10^6 candidate space. This is
@@ -256,7 +277,34 @@ if (idToken && adminUid) {
       badTry.status === 400 && attempts === 1, `${badTry.status} attempts=${attempts}`);
 
     const verify = await req("POST", "/api/admin/otp/verify", { token: idToken, body: { code: otpCode } });
-    record("  correct code verified 200", verify.status === 200, `${verify.status}`);
+      record("  correct code verified 200", verify.status === 200, `${verify.status}`);
+
+    const gateSetCookie = verify.setCookie.find((c) => c.startsWith("wolf_admin_gate=")) || "";
+    const gateCookie = gateSetCookie.split(";")[0];
+    record("  verify issues the signed httpOnly gate cookie (Path=/admin)",
+      gateCookie !== "wolf_admin_gate=" && /HttpOnly/i.test(gateSetCookie) &&
+      /Path=\/admin/i.test(gateSetCookie) && /SameSite=Lax/i.test(gateSetCookie),
+      gateSetCookie ? "wolf_admin_gate present (value never printed)" : "missing set-cookie");
+
+    const gateOpen = await req("GET", "/admin/dashboard", { cookie: gateCookie, manualRedirect: true });
+    record("  /admin/dashboard renders for the gated browser + noindex",
+      gateOpen.status === 200 && /noindex/i.test(gateOpen.robots || ""),
+      `${gateOpen.status} x-robots-tag=${gateOpen.robots}`);
+
+    const forged = await req("GET", "/admin/dashboard", {
+      cookie: "wolf_admin_gate=v1.Zmlna2Vy.9999999999999.deadbeef",
+      manualRedirect: true,
+    });
+    record("  forged gate cookie is rejected", isGateRedirect(forged), `${forged.status} ${forged.location}`);
+
+    const logout = await req("POST", "/api/admin/logout", { cookie: gateCookie });
+    record("  POST /api/admin/logout clears the gate cookie",
+      logout.status === 200 && logout.setCookie.some((c) => /wolf_admin_gate=;|Max-Age=0/i.test(c)),
+      `${logout.status}`);
+
+    const gateRelocked = await req("GET", "/admin/dashboard", { manualRedirect: true });
+    record("  /admin/dashboard is gated again after sign-out", isGateRedirect(gateRelocked),
+      `${gateRelocked.status} ${gateRelocked.location}`);
 
     const tokenGone = !(await db.collection("otp_tokens").doc(adminUid).get()).exists;
     const verifiedDoc = await db.collection("otp_verified").doc(adminUid).get();
@@ -329,7 +377,7 @@ const info = results.filter((r) => r.ok !== true && r.ok !== false).length;
 console.log("\nSIDE EFFECTS ON THE LIVE FIREBASE PROJECT");
 console.log(`  registrations/${registrationId} + payments/PAY-${registrationId} (REJECTED, reason recorded)`);
 console.log("  auditLogs entries are append-only by design (no deletes)");
-console.log("  one mail/{id} doc queued - actual inbox delivery is the Trigger Email extension's job");
+console.log("  one otp_tokens/{uid} delivery record - SMTP accepted the message");
 console.log(`  settings/sequence advanced past ${registrationId}`);
 notes.forEach((n) => console.log("  note: " + n));
 console.log(`\nSUMMARY ${JSON.stringify({ pass, fail, info })}`);

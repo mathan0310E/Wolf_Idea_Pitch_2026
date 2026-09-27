@@ -1,0 +1,30 @@
+# Keep the image build small and secret-free. Next.js builds from source here,
+# so build output and dependencies are always regenerated inside the image.
+node_modules
+.next
+dist
+out
+build
+.next-build
+
+# Never bake env files (or any secret) into a layer - pass runtime values with
+# `docker run --env-file` / `-e` and public values with `--build-arg`.
+.env
+.env.*
+!.env.example
+
+# VCS, tooling and local scratch
+.git
+.gitignore
+.vercel
+.playwright-mcp
+.vscode
+*.log
+dev-server*.log
+fresh-dev.log
+*.tsbuildinfo
+coverage
+
+# Docs and one-off reports are not needed to build the app
+*.md
+*.txt

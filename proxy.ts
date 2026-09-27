@@ -1,7 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export function proxy() {
-  const response = NextResponse.next();
+export function proxy(request: NextRequest) {
+  // Forwarded so server layouts (app/admin/layout.tsx) can tell the login page
+  // apart from the gated admin pages without a second request.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
 
   // Security Headers (§6)
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -35,6 +40,13 @@ export function proxy() {
   ].join("; ");
 
   response.headers.set("Content-Security-Policy", csp);
+
+  // The admin area is never indexable and never cached, even for a crawler
+  // that ignores robots.txt (public/robots.txt also disallows /admin/).
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  }
 
   return response;
 }

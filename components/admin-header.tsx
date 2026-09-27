@@ -43,7 +43,9 @@ export function AdminHeader({ title }: { title: string }) {
   const router = useRouter();
   const handleLogout = () => {
     sessionStorage.removeItem("wolf_admin_session");
-    router.push("/admin/login");
+    void fetch("/api/admin/logout", { method: "POST", keepalive: true }).finally(() => {
+      router.push("/admin/login");
+    });
   };
 
   return (

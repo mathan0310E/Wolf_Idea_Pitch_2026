@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { requireAdminIdentity } from "@/lib/admin-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { adminSessionGateAvailable, setAdminGateCookie } from "@/lib/admin-session";
 
 /**
  * Admin 2FA step 2 — OTP verification.
@@ -24,6 +25,15 @@ export async function POST(req: NextRequest) {
   const auth = await requireAdminIdentity(req);
   if ("error" in auth) return auth.error;
   const { uid, email } = auth.admin;
+
+  // Without a signable gate secret the admin layout could never render, so
+  // fail closed BEFORE consuming the code instead of leaving the admin stuck.
+  if (!adminSessionGateAvailable()) {
+    return NextResponse.json(
+      { error: "Admin session gate is not configured. See FIREBASE_SETUP.md." },
+      { status: 503 }
+    );
+  }
 
   let code = "";
   try {
@@ -109,7 +119,12 @@ export async function POST(req: NextRequest) {
       timestamp: now.toISOString(),
     });
 
-    return NextResponse.json({ success: true, admin: auth.admin });
+    // A successful 2FA also mints the signed, httpOnly page-gate cookie so
+    // the admin pages render server-side for this browser only.
+    return setAdminGateCookie(
+      NextResponse.json({ success: true, admin: auth.admin }),
+      uid
+    );
   } catch (error) {
     console.error("Admin OTP Verify Error:", error);
     return NextResponse.json(

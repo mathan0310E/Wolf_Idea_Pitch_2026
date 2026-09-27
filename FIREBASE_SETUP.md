@@ -39,10 +39,13 @@ The admin panel signs in at `/admin/login` with **email + password, then a
 
 1. Email + password are verified against Firebase Auth (the account's email
    must already be verified — `email_verified` is enforced server-side).
-2. `POST /api/admin/otp/send` emails a one-time code (5-minute TTL, single
-   use, max 3 attempts, 60 s resend cooldown; sha256-hashed in Firestore
-   `otp_tokens/{uid}`, every send/verify/failure audited as `OTP_SENT` /
-   `OTP_VERIFIED` / `OTP_FAILED`).
+2. `POST /api/admin/otp/send` generates a one-time code, stores only a
+   uid-salted SHA-256 hash in `otp_tokens/{uid}` (5-minute TTL, max 3 attempts,
+   60 s resend cooldown), and emails the plaintext code with `nodemailer` over
+   SMTP (§3b). Delivery is synchronous, so the response itself carries the
+   outcome (`sent`, `delivery: "SUCCESS"`) and it is recorded on the OTP
+   document. Every send/verify/failure is audited as `OTP_SENT` /
+   `OTP_VERIFIED` / `OTP_FAILED` / `OTP_SEND_FAILED`.
 3. `POST /api/admin/otp/verify` checks the code and records
    `otp_verified/{uid}`. **Every** other `/api/admin/*` route
    (`lib/admin-auth.ts → requireAdmin`) requires a fresh OTP check (12 h
@@ -74,37 +77,52 @@ SDK credentials are absent, `requireAdmin()` fails closed (503 for admin APIs,
 Administer the event with a real Firebase project plus the `ADMIN_EMAILS`
 allowlist above.
 
-## 3b. Admin 2FA email delivery (Firebase Trigger Email extension — REQUIRED in production)
+## 3b. Admin 2FA email delivery (SMTP with nodemailer — no Blaze plan required)
 
-The OTP code is delivered by Firebase, not by this repo: the server
-(`lib/mailer.ts`) queues each code as a Firestore document in the `mail`
-collection, and the official **Trigger Email** extension delivers it using the
-provider you configure in the Firebase console. No SMTP secrets live in
-`.env.local`, Vercel env vars, or this repo.
+The OTP is sent synchronously by the Next.js server route with `nodemailer`
+(`lib/mailer.ts`) over a plain SMTP submission connection. It does not use the
+Gmail API, an OAuth client, the Firebase Trigger Email extension, or a Blaze
+billing plan. Firebase Auth and Firestore stay on the free Spark resources; the
+sending mailbox's own sending quota applies.
 
-One-time setup (Firebase console → **Build → Extensions → Trigger Email → Install**):
+One-time setup (Gmail as the sender):
 
-1. Collection: `mail` (the default — matches `lib/mailer.ts`).
-2. Add the extension's service account as a Firestore writer, or leave the
-   default; the server writes via the Admin SDK which bypasses rules.
-3. Configure the sender (SMTP relay URI or SendGrid key) in the extension
-   config — this is the ONLY place mail credentials live.
-4. Deploy the updated rules (`firestore.rules` denies all client access to
-   `mail`, `otp_tokens`, `otp_verified` — server/Admin SDK only):
+1. Enable **2-Step Verification** on the sending Google account, then create an
+   **App Password** (Google Account → Security → App passwords). The
+   16-character App Password goes into `SMTP_PASS` — never the account password.
+2. Put the mailbox and the App Password in `.env.local` and the same
+   server-only variables in Vercel:
+
    ```bash
-   npx firebase-tools deploy --only firestore:rules
+   SMTP_USER="your-sender@gmail.com"
+   SMTP_PASS="your-16-character-app-password"
    ```
 
-Rules:
+   `SMTP_HOST`/`SMTP_PORT` already default to `smtp.gmail.com:465` with implicit
+   TLS, so those two variables are all Gmail needs. `SMTP_FROM` (defaults to
+   `SMTP_USER`) and `SMTP_FROM_NAME` are optional. Never expose these values
+   through `NEXT_PUBLIC_*` variables.
+3. Any other provider works by also setting `SMTP_HOST`, `SMTP_PORT`, and
+   `SMTP_SECURE` (`true` for implicit TLS such as port 465, `false` to upgrade
+   with STARTTLS such as port 587). TLS 1.2 is the enforced minimum.
+4. Send a test OTP. A successful send answers `sent: true` with
+   `delivery: "SUCCESS"`. A failed send deletes the undelivered OTP and records
+   `OTP_SEND_FAILED`; SMTP failures are classified into a short code
+   (`smtp-auth`, `smtp-<code>`, `smtp-tls`, …) so no provider banner or
+   credential ever reaches the client. Because the send is synchronous there is
+   nothing to poll — the old delivery-status endpoint is gone.
 
-- **Without the extension installed, admin sign-in fails closed**: OTP send
-  returns 503 (`Email delivery is not configured`) — 2FA can never be
-  silently skipped.
-- **Local dev without Admin SDK credentials is still testable**: the code is
-  printed to the server console (`[mailer] DEV MODE — admin OTP for …`) with
-  a `devNotice` in the API response — the full password → OTP → dashboard
-  flow works without credentials. (The local mock store is not watched by the
-  extension, so no email is sent locally — by design.)
+The server stores only delivery metadata (`provider: "smtp"`, `state`,
+`messageId`, `attempts`) alongside the hashed OTP. The plaintext code and the
+SMTP credentials are not stored in Firestore. `firestore.rules` keeps
+`otp_tokens` and `otp_verified` server-only:
+
+```bash
+npx firebase-tools deploy --only firestore:rules
+```
+
+Without `SMTP_USER`/`SMTP_PASS`, local development returns a `devNotice` and
+does not log or print the OTP. Production returns 503 until SMTP is configured.
 
 ## 4. Registration Gate (no redeploy needed)
 - `GET /api/admin/settings` (public) returns `{ open, announcement }` — the

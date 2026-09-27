@@ -42,12 +42,6 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Firebase Trigger Email extension queue — server-side only (Admin SDK
-    // bypasses rules). Clients must never read or write the mail queue.
-    match /mail/{mailId} {
-      allow read, write: if false;
-    }
-
     // Admin 2FA OTP state — server-side only (Admin SDK bypasses rules).
     // Clients must never read or write OTP tokens or verification records.
     match /otp_tokens/{uid} {

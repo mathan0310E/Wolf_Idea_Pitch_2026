@@ -16,6 +16,9 @@ back to the `role: "admin"` custom claim otherwise), and a fresh email-OTP 2FA
 check (`otp_verified/{uid}`, 12 h TTL, issued by `POST /api/admin/otp/verify`).
 Every state modification creates an immutable log entry in `auditLogs`.
 The OTP endpoints use the identity-only gate so the challenge can be issued.
+Mail credentials (`SMTP_USER`/`SMTP_PASS`) are server-only environment
+variables, and the API never returns provider text — only a short classified
+failure code (`smtp-auth`, `smtp-<code>`, `smtp-tls`, …).
 
 ## 4. HTTP & Transport Security
 - HTTPS enforced by Vercel.

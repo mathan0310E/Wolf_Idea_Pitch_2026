@@ -6,12 +6,15 @@ import Image from "next/image";
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signOut,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { AlertCircle, MailCheck, RotateCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
+/** Mirrors `delivery` in the /api/admin/otp/send response (lib/mailer.ts). */
+type OtpSendOutcome = "SUCCESS" | "UNPROCESSED";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -21,7 +24,6 @@ export default function AdminLoginPage() {
   const [error, setError] = React.useState("");
   const [notice, setNotice] = React.useState("");
   const [stage, setStage] = React.useState<"form" | "otp">("form");
-  const [pendingToken, setPendingToken] = React.useState("");
   const [otpCode, setOtpCode] = React.useState("");
   const [cooldown, setCooldown] = React.useState(0);
 
@@ -43,7 +45,6 @@ export default function AdminLoginPage() {
 
     if (!res.ok) {
       await signOut(auth); // not an authorized admin — drop the session
-      setPendingToken("");
       setStage("form");
       setError(data.error || "This account is not authorized for admin access.");
       return;
@@ -69,11 +70,18 @@ export default function AdminLoginPage() {
       await user.reload(); // pick up a verification completed in another tab
 
       if (!user.emailVerified) {
-        // The server-side email_verified gate would reject this account
-        // anyway. No verification LINK is sent here — 2FA is the emailed OTP.
+        let verificationSent = false;
+        try {
+          await sendEmailVerification(user);
+          verificationSent = true;
+        } catch {
+          verificationSent = false;
+        }
         await signOut(auth);
         setError(
-          "This email address is not verified. Verify it in Firebase or contact the event organizer."
+          verificationSent
+            ? "This email address is not verified. We sent a verification link; open it, then sign in again."
+            : "This email address is not verified and the verification email could not be sent. Contact the event organizer."
         );
         return;
       }
@@ -81,7 +89,7 @@ export default function AdminLoginPage() {
       // 2FA step 1 — email + password passed; ask the server to email a
       // one-time code. The session is only established after step 2 verifies
       // that code (handleVerifyOtp -> finishSignIn).
-      const idToken = await user.getIdToken();
+      const idToken = await user.getIdToken(true);
       const otpRes = await fetch("/api/admin/otp/send", {
         method: "POST",
         headers: {
@@ -93,6 +101,8 @@ export default function AdminLoginPage() {
       const otpData = (await otpRes.json().catch(() => ({}))) as {
         error?: string;
         devNotice?: string;
+        messageId?: string | null;
+        delivery?: OtpSendOutcome;
       };
 
       if (!otpRes.ok) {
@@ -101,12 +111,13 @@ export default function AdminLoginPage() {
         return;
       }
 
-      setPendingToken(idToken);
       setOtpCode("");
       setStage("otp");
       setNotice(
         otpData.devNotice ||
-          `A 6-digit sign-in code was emailed to ${user.email}. It expires in 5 minutes.`
+          (otpData.delivery === "SUCCESS"
+            ? `A 6-digit sign-in code was emailed to ${user.email} and expires in 5 minutes. Check the spam folder if it is not in the inbox.`
+            : `A 6-digit sign-in code was generated for ${user.email}, but email delivery could not be confirmed. It expires in 5 minutes.`)
       );
       setCooldown(60);
     } catch (err: unknown) {
@@ -142,14 +153,16 @@ export default function AdminLoginPage() {
     setNotice("");
     setIsLoading(true);
     try {
-      if (!pendingToken) {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
         setStage("form");
         return;
       }
+      const freshToken = await currentUser.getIdToken(true);
       const res = await fetch("/api/admin/otp/send", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${pendingToken}`,
+          Authorization: `Bearer ${freshToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({}),
@@ -157,13 +170,18 @@ export default function AdminLoginPage() {
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         devNotice?: string;
+        messageId?: string | null;
+        delivery?: OtpSendOutcome;
       };
       if (!res.ok) {
         setError(data.error || "Could not resend the code. Sign in again to retry.");
         return;
       }
       setNotice(
-        data.devNotice || `A new 6-digit code was emailed to ${email}. It expires in 5 minutes.`
+        data.devNotice ||
+          (data.delivery === "SUCCESS"
+            ? `A new 6-digit code was emailed to ${email} and expires in 5 minutes.`
+            : `A new 6-digit code was generated for ${email}, but email delivery could not be confirmed. It expires in 5 minutes.`)
       );
       setCooldown(60);
     } catch {
@@ -175,17 +193,19 @@ export default function AdminLoginPage() {
 
   const handleVerifyOtp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!pendingToken) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
       setStage("form");
       return;
     }
     setIsLoading(true);
     setError("");
     try {
+      const freshToken = await currentUser.getIdToken(true);
       const res = await fetch("/api/admin/otp/verify", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${pendingToken}`,
+          Authorization: `Bearer ${freshToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ code: otpCode.trim() }),
@@ -195,7 +215,7 @@ export default function AdminLoginPage() {
         setError(data.error || "Verification failed.");
         return;
       }
-      await finishSignIn(pendingToken);
+      await finishSignIn(freshToken);
     } catch {
       setError("Verification failed. Please try again.");
     } finally {
@@ -330,7 +350,6 @@ export default function AdminLoginPage() {
                   type="button"
                   onClick={async () => {
                     await signOut(auth);
-                    setPendingToken("");
                     setOtpCode("");
                     setStage("form");
                     setError("");

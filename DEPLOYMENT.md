@@ -44,12 +44,13 @@ success. Follow this list to make it fully live.
    npx firebase-tools deploy --only firestore:rules
    ```
 6. **Screenshots** → stored as Base64 inside `POST /api/registrations/submit`, decoded and saved in the Firestore `payments` document. No Firebase Storage bucket is needed.
-7. **Build → Extensions → Trigger Email → Install** (delivers the admin 2FA
-   OTP codes — REQUIRED, else OTP send is 503): collection `mail`, sender
-   configured in the extension itself. No mail secrets go in Vercel env vars.
-   Redeploy rules afterwards (`npx firebase-tools deploy --only
-   firestore:rules`) so `mail` / `otp_tokens` / `otp_verified` stay
-   server-only.
+7. **SMTP for OTP delivery** (the admin 2FA codes — sent with `nodemailer`;
+   no Firebase extension, no Blaze plan, no Gmail API/OAuth client): for Gmail,
+   enable 2-Step Verification and create an **App Password**, then set
+   `SMTP_USER` + `SMTP_PASS` (see `.env.example` — host/port already default to
+   `smtp.gmail.com:465`). Any other SMTP provider works by also setting
+   `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE`. A real send answers
+   `sent: true` + `delivery: "SUCCESS"`. The Firebase project remains on Spark.
 
 ## 2. Environment variables (Vercel → Project → Settings → Environment Variables)
 
@@ -65,7 +66,14 @@ success. Follow this list to make it fully live.
 | `FIREBASE_ADMIN_PROJECT_ID` | server (Admin SDK) |
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | server (service account email) |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | server — keep the literal `\n` escapes |
-| *(no mail vars)* | OTP email is sent by the Firebase Trigger Email extension (step 1.7) — nothing to configure in Vercel |
+| `SMTP_USER` | server — mailbox that sends the OTP (the Gmail address for Gmail SMTP) |
+| `SMTP_PASS` | server — Gmail **App Password** (or any SMTP password); never exposed to the client |
+| `SMTP_HOST` | optional — defaults to `smtp.gmail.com` |
+| `SMTP_PORT` | optional — defaults to `465` (implicit TLS) |
+| `SMTP_SECURE` | optional — `true`/`false`; defaults to `true` on port 465 |
+| `SMTP_FROM` | optional — From address, defaults to `SMTP_USER` |
+| `SMTP_FROM_NAME` | optional display name |
+| `ADMIN_SESSION_SECRET` | optional — signs the httpOnly admin page-gate cookie; when unset it is derived from the Admin SDK key |
 Copy `.env.example` for the exact shape. Never commit real values.
 
 ## 3. Pre-deploy verification (local, with real env in `.env.local`)
@@ -126,3 +134,70 @@ rejects it, so re-running it is safe before a launch.
   without a nonce-based middleware; everything else is locked down.
 - Firestore rules (not the app) are the hard boundary for client access;
   server routes always use the Admin SDK.
+
+## 6. Self-hosting (VPS / Docker)
+
+The same repo also builds a self-contained server bundle for hosts other than
+Vercel. `next.config.ts` switches on `VERCEL`: Vercel keeps a plain `.next` build,
+everything else builds `output: "standalone"` into `dist/`.
+
+```bash
+npm run bundle                  # next build + assemble dist/standalone
+npm run bundle -- --tarball     # ...and dist/wolf-idea-pitch-standalone.tar.gz
+npm run bundle -- --skip-build  # re-assemble only (reuse an existing dist/)
+```
+
+`dist/standalone/` is runnable as-is: `server.js`, the traced `node_modules`
+(`sharp` included, so `next/image` works), plus `public/` and `dist/static/` —
+`next build` leaves those two out on purpose, `scripts/build-standalone.mjs`
+copies them in.
+
+```bash
+# local preview (the standalone server ignores .env* - it must be passed)
+node --env-file=.env.local dist/standalone/server.js
+
+# VPS
+cd dist/standalone && PORT=3000 HOSTNAME=0.0.0.0 node server.js
+```
+
+- `PORT` defaults to 3000, `HOSTNAME` to `0.0.0.0`; put nginx/Caddy in front for TLS.
+- Env vars are **not** bundled. `NEXT_PUBLIC_*` are inlined into the client
+  bundle at **build** time on the machine running `npm run bundle`; the server
+  secrets (`FIREBASE_ADMIN_*`, `SMTP_*`, `ADMIN_EMAILS`, `ADMIN_SESSION_SECRET`)
+  are read at **runtime** only.
+
+Docker (context = this folder, daemon + network required):
+
+```bash
+docker build -t wolf-idea-pitch \
+  --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=... \
+  --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=... \
+  --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=... \
+  --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=... \
+  --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=... \
+  --build-arg NEXT_PUBLIC_SITE_URL=https://your-domain \
+  .
+docker run --env-file .env.local -p 3000:3000 wolf-idea-pitch
+```
+
+`.dockerignore` excludes `.env*`, so no secret can land in a layer; the `runner`
+stage copies only `dist/standalone`, `public/` and `dist/static/`, runs as the
+unprivileged `node` user, and carries an `/api/health` healthcheck.
+
+**Verified 2026-09-27** (Next.js 16.3.5, Node 24.19.0, Windows, ports 3311–3313):
+
+| Check | Result |
+|---|---|
+| `npm run bundle -- --skip-build --tarball` | exit 0; `public/` + 47 static files copied; folder 39.7 MB; tarball 11.7 MB |
+| `node dist/standalone/server.js` (no env) | `/api/health` → `"database":"mock"` plus `[FATAL CONFIG]` — proves `.env*` is not auto-read |
+| `node --env-file=.env.local dist/standalone/server.js` | `/api/health` → `"database":"firebase"`; `/` 200 with `WOLF IDEA PITCH` in the HTML; `/faq` 200; unknown path 404; `/bg.png` 200 `image/png`; `/_next/static/...js` 200; CSP from `proxy.ts` present; `/api/admin/session` 401 |
+| `npm run start` (local, serves `dist/`) | `/api/health` 200 `firebase`, but Next warns `"next start" does not work with "output: standalone"` — use `node dist/standalone/server.js` |
+| `VERCEL=1 npm run build` | exit 0; `.next/next-server.js.nft.json` emitted, `dist/` untouched → the Vercel deploy path is unaffected |
+| `docker build` / `docker run` | **not run here** (needs the daemon + network) — verify on the target host |
+
+Do not "simplify" the conditional: Next.js 16.3 stopped writing
+`.next/next-server.js.nft.json` while an adapter is active, but Vercel's
+`onBuildComplete` still reads it, so `output: "standalone"` on Vercel fails every
+deploy (vercel/next.js#96646). Side effect to expect: `next build` rewrites the
+`include` entries in `tsconfig.json` for whichever `distDir` is active — both
+`.next/**` and `dist/**` entries are committed, so `tsc` covers both.
