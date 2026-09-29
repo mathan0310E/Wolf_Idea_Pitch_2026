@@ -74,9 +74,10 @@ export default function Home() {
           {/* Background glow */}
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-[#FF0007]/10 blur-[140px] pointer-events-none" />
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20 sm:py-28 md:py-36">
-            <div className="max-w-3xl text-center lg:text-left space-y-6 stagger">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 flex items-center justify-center lg:justify-start gap-2">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-10 sm:py-14 md:py-16 lg:py-20">
+            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8 lg:gap-12">
+            <div className="order-2 md:order-1 min-w-0 flex-1 max-w-3xl text-center md:text-left space-y-6 stagger">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 flex items-center justify-center md:justify-start gap-2">
                 <span className="h-1.5 w-1.5 shrink-0 bg-[#FF0007]" />
                 CYBER WOLF PRESENTS
               </p>
@@ -106,7 +107,7 @@ export default function Home() {
                 The flagship cybersecurity & innovation idea pitch by Cyber Wolf. Build resilient architectures, tackle real-world vulnerability challenges, and pitch to industry experts on 09 October 2026.
               </p>
 
-              <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3">
+              <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-center md:justify-start gap-3">
                 <ClipButton
                   href="/register"
                   size="lg"
@@ -125,8 +126,8 @@ export default function Home() {
               </div>
 
               {/* LIVE COUNTDOWN */}
-              <div className="mt-8 sm:mt-10 flex flex-col items-center lg:items-start gap-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 flex items-center justify-center lg:justify-start gap-2">
+              <div className="mt-8 sm:mt-10 flex flex-col items-center md:items-start gap-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/70 flex items-center justify-center md:justify-start gap-2">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF0007] opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF0007]" />
@@ -135,6 +136,19 @@ export default function Home() {
                 </p>
                 <CountdownTimer targetDate={event.date} />
               </div>
+            </div>
+
+            <div className="order-1 md:order-2 flex shrink-0 justify-center md:justify-end md:w-[42%] lg:w-[46%]">
+              <Image
+                src="/hero.png"
+                alt="Cyber Wolf associate holding the winner trophy"
+                width={768}
+                height={1024}
+                priority
+                sizes="(max-width: 767px) 200px, (max-width: 1023px) 380px, 560px"
+                className="h-48 w-auto object-contain sm:h-56 md:h-[min(68vh,520px)] lg:h-[min(74vh,620px)]"
+              />
+            </div>
             </div>
           </div>
 

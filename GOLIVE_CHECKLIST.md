@@ -21,14 +21,10 @@ Use this checklist to verify the project is production-ready before launch.
 ### 2. Environment Variables (Vercel → Project Settings → Environment Variables)
 
 **Required Public Variables:**
-- [ ] `NEXT_PUBLIC_FIREBASE_API_KEY`
-- [ ] `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- [ ] `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- [ ] `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- [ ] `NEXT_PUBLIC_FIREBASE_APP_ID`
 - [ ] `NEXT_PUBLIC_SITE_URL` — set to final production domain
 
 **Required Server Variables:**
+- [ ] `FIREBASE_WEB_API_KEY` — Firebase web API key. Must not be named `NEXT_PUBLIC_`
 - [ ] `ADMIN_EMAILS` — comma-separated admin emails
 - [ ] `FIREBASE_ADMIN_PROJECT_ID`
 - [ ] `FIREBASE_ADMIN_CLIENT_EMAIL`
@@ -117,11 +113,11 @@ Use this checklist to verify the project is production-ready before launch.
 ### Option B: Manual Deployment (VPS / Docker)
 
 ```bash
-# Build the self-hosted bundle -> dist/standalone (see DEPLOYMENT.md "Self-hosting")
+# Build the self-hosted bundle -> .next/standalone (see DEPLOYMENT.md "Self-hosting")
 npm run bundle -- --tarball
 
 # Run it - the standalone server does NOT read .env*, pass the env explicitly
-node --env-file=.env.local dist/standalone/server.js
+node --env-file=.env .next/standalone/server.js
 
 # Verify health endpoint
 curl http://localhost:3000/api/health

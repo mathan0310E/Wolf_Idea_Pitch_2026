@@ -69,13 +69,9 @@ export const event = {
     whatsapp: "+91 78259 88139",
   },
   payment: {
-    // ⚠️ ORGANIZER: Replace with your actual UPI ID before go-live.
-    // Format: `yourname@bank` or `mobile@bank`.
-    // Example: `cyberwolf360@oksbi`
-    upiId: "8610259832-2@ybl",
-    // ⚠️ ORGANIZER: Replace with the beneficiary name as it appears on the
-    // bank account. This is shown to registrants for verification.
-    beneficiaryName: "Mathan kumar. S",
+    // UPI ID shown on the payment step, the canvas QR, and the pay link.
+    upiId: "e-bookshp-programming@ybl",
+    beneficiaryName: "TAMILSELVAN S",
     currency: "INR",
   },
   registration: {

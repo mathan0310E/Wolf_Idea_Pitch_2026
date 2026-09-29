@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { writeAuditLog } from "@/lib/admin-audit";
 import { sanitizeForCsv } from "@/lib/validation";
 import Papa from "papaparse";
 
@@ -39,6 +40,17 @@ export async function GET(req: NextRequest) {
     });
 
     const csvContent = Papa.unparse(rows);
+
+    try {
+      await writeAuditLog({
+        actorUid: auth.admin.uid,
+        action: "ADMIN_EXPORT_REGISTRATIONS",
+        targetId: "registrations",
+        after: { rowCount: rows.length },
+      });
+    } catch (auditError) {
+      console.error("Export audit write failed:", auditError);
+    }
 
     return new NextResponse(csvContent, {
       status: 200,

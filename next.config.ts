@@ -1,82 +1,59 @@
 import type { NextConfig } from "next";
+import { adminPathSegment } from "./lib/admin-path-segment";
+import { securityHeaders } from "./lib/security-headers";
+
+const adminSegment = adminPathSegment();
 
 // ---------------------------------------------------------------------------
 // Two build targets, one config
 // ---------------------------------------------------------------------------
-// Vercel (the production host — see DEPLOYMENT.md) gets a normal `.next` build.
+// The build folder is always `.next` — local, self-hosted, and Vercel.
 //
 // Next.js 16.3 no longer emits `.next/next-server.js.nft.json` while an adapter
 // is active, but Vercel's `onBuildComplete` step still reads that file, so an
 // unconditional `output: "standalone"` makes every Vercel deploy fail with
 //   ENOENT: no such file or directory, open '/vercel/path0/.next/next-server.js.nft.json'
 // (vercel/next.js#96646, still open). Vercel sets `VERCEL=1` in its build
-// environment, so standalone is enabled only when that marker is absent — i.e.
-// for the self-hosted VPS/Docker bundle. Do NOT make this unconditional.
+// environment, so standalone is enabled only when that marker is absent.
+// Do NOT make standalone unconditional, and do not set a custom distDir.
 //
-// Self-hosted / VPS / Docker (`npm run bundle`, or `docker build`) gets a traced
-// `standalone` build written to `dist/`: the deployable artefact is
-// `dist/standalone/server.js` plus its own `node_modules` (no `npm install` on
-// the server). Preview it with `node --env-file=.env.local
-// dist/standalone/server.js`; `npm run start` still serves `dist/` locally but
-// Next.js warns that `next start` is not the runner for standalone output.
+// Self-hosted (`npm run bundle`) gets a traced standalone server at
+// `.next/standalone/server.js` plus its own `node_modules`. Preview it with
+// `node --env-file=.env .next/standalone/server.js`. `next start` warns that it
+// is not the runner for standalone output.
 const isVercelBuild = Boolean(process.env.VERCEL);
 
 const nextConfig: NextConfig = {
   output: isVercelBuild ? undefined : "standalone",
-  distDir: isVercelBuild ? ".next" : "dist",
 
   turbopack: {
     // Workspace root IS the project root here (no monorepo parent needed).
     root: __dirname,
   },
 
-  // Security headers applied to every response (Vercel applies these via
-  // middleware when possible; this is the fallback for static/assets).
+  // Same policy as proxy.ts (lib/security-headers.ts). This copy covers paths
+  // the proxy matcher skips. Do not fork a looser CSP here.
+  poweredByHeader: false,
+  // Hides the built-in Next.js "N" badge that floats over the page in `next dev`.
+  devIndicators: false,
+  env: {
+    NEXT_PUBLIC_ADMIN_PATH: adminSegment,
+  },
+
+  // Organizer pages stay in app/admin for the server. The browser only sees
+  // /{sha256}/… ; a direct /admin request is rejected in proxy.ts.
+  async rewrites() {
+    return [
+      { source: `/${adminSegment}`, destination: "/admin" },
+      { source: `/${adminSegment}/:path*`, destination: "/admin/:path*" },
+    ];
+  },
+
   async headers() {
     return [
       {
         source: "/(.*)",
-        headers: [
-          {
-            key: "X-DNS-Prefetch-Control",
-            value: "on",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), interest-cohort=()",
-          },
-          {
-            key: "Strict-Transport-Security",
-            value: "max-age=31536000; includeSubDomains; preload",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https: blob:", // 'unsafe-inline' required by Next.js hydration w/o nonce; tighten later if a nonce-based approach is adopted
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: blob:",
-              "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.firebaseio.com https://*.firestore.googleapis.com https://*.auth.googleapis.com https://firestore.googleapis.com wss://*.ws.firebaseio.com",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join("; "),
-          },
-        ],
+        headers: securityHeaders(),
       },
     ];
   },
@@ -151,26 +128,11 @@ const nextConfig: NextConfig = {
   // },
 };
 
-// Warn at build time if required PUBLIC env vars are missing. The app still
-// builds (so CI isn't blocked by missing secrets), but deploys without them
-// will fail at runtime — this surfaces the problem early.
-const requiredPublicEnv = [
-  "NEXT_PUBLIC_FIREBASE_API_KEY",
-  "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-  "NEXT_PUBLIC_FIREBASE_APP_ID",
-];
-
-const missing = requiredPublicEnv.filter(
-  (key) => !process.env[key] && process.env.NODE_ENV === "production"
-);
-
-if (missing.length > 0 && process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" && !process.env.FIREBASE_WEB_API_KEY?.trim()) {
   console.warn(
-    `[WARNING] Production build missing public env vars: ${missing.join(", ")}. ` +
-      "The app will build but client-side Firebase will fail at runtime. " +
-      "Set these in Vercel → Project Settings → Environment Variables."
+    "[WARNING] Production build is missing FIREBASE_WEB_API_KEY. " +
+      "Admin sign-in calls Firebase on the server and this key must stay out of the browser. " +
+      "Set it in Vercel → Project Settings → Environment Variables (not as NEXT_PUBLIC_)."
   );
 }
 

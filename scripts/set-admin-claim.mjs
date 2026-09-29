@@ -7,7 +7,7 @@
  *   node scripts/set-admin-claim.mjs <uid-or-email>   set role:"admin" claim
  *   node scripts/set-admin-claim.mjs --check          verify credentials (no network)
  *
- * Reads FIREBASE_ADMIN_* from .env.local (falls back to .env.example).
+ * Reads FIREBASE_ADMIN_* from .env (falls back to .env.example).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -32,7 +32,7 @@ function loadEnv(file) {
   return out;
 }
 
-const env = loadEnv(".env.local") ?? loadEnv(".env.example") ?? {};
+const env = loadEnv(".env") ?? loadEnv(".env.example") ?? {};
 const projectId = env.FIREBASE_ADMIN_PROJECT_ID;
 const clientEmail = env.FIREBASE_ADMIN_CLIENT_EMAIL;
 const rawKey = env.FIREBASE_ADMIN_PRIVATE_KEY ?? "";
@@ -59,7 +59,7 @@ if (!arg || arg === "--help" || arg === "-h") {
 }
 
 if (!projectId || !clientEmail || !pemOk) {
-  console.error("Missing/invalid FIREBASE_ADMIN_* credentials in .env.local.");
+  console.error("Missing/invalid FIREBASE_ADMIN_* credentials in .env.");
   console.error("Run `node scripts/set-admin-claim.mjs --check` for details.");
   process.exit(1);
 }

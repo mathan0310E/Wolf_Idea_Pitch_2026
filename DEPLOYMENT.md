@@ -6,7 +6,7 @@ success. Follow this list to make it fully live.
 
 ## 1. Firebase Console (one time)
 
-1. Project ID: `wolf-idea-pitch` (matches `.firebaserc` and `.env.local` —
+1. Project ID: `wolf-idea-pitch` (matches `.firebaserc` and `.env` —
    if you ever rename the project, update both).
 2. **Build → Authentication → Sign-in method** → enable **Email/Password**.
    Admin sign-in is email + password followed by an emailed 6-digit OTP; no
@@ -16,7 +16,7 @@ success. Follow this list to make it fully live.
    (`lib/admin-auth.ts`):
 
    ```bash
-   # .env.local (dev) — and the same key in Vercel env vars (step 2 below)
+   # .env (dev) — and the same key in Vercel env vars (step 2 below)
    ADMIN_EMAILS="organizer@cyberwolf.in"
    ```
 
@@ -56,11 +56,7 @@ success. Follow this list to make it fully live.
 
 | Variable | Where it's used |
 |---|---|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | client auth (login, registration) |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | client |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | client |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | client |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | client |
+| `FIREBASE_WEB_API_KEY` | server only — admin sign-in. Do not use a `NEXT_PUBLIC_` name |
 | `NEXT_PUBLIC_SITE_URL` | SEO metadata / sitemap — set to the **final domain** |
 | `ADMIN_EMAILS` | server admin gate — comma-separated admin emails allowed to sign in to `/admin` (primary gate) |
 | `FIREBASE_ADMIN_PROJECT_ID` | server (Admin SDK) |
@@ -76,7 +72,7 @@ success. Follow this list to make it fully live.
 | `ADMIN_SESSION_SECRET` | optional — signs the httpOnly admin page-gate cookie; when unset it is derived from the Admin SDK key |
 Copy `.env.example` for the exact shape. Never commit real values.
 
-## 3. Pre-deploy verification (local, with real env in `.env.local`)
+## 3. Pre-deploy verification (local, with real env in `.env`)
 
 ```bash
 npm run lint          # 0 errors
@@ -115,7 +111,7 @@ before going live. The server logs `[FATAL CONFIG]` at startup in that state.
 Post-deploy items verified on **2026-09-23** against a local production server
 (`npm run build` + `next start`) backed by the live Firebase project, using
 `scripts/live-e2e.mjs` — the repeatable end-to-end check
-(`node --env-file=.env.local scripts/live-e2e.mjs [baseUrl]`): registration →
+(`node --env-file=.env scripts/live-e2e.mjs [baseUrl]`): registration →
 screenshot → status lookup → admin 2FA OTP → registrations feed → screenshot
 retrieval → rejection → audit trail. It writes ONE test registration and
 rejects it, so re-running it is safe before a launch.
@@ -139,49 +135,44 @@ rejects it, so re-running it is safe before a launch.
 
 The same repo also builds a self-contained server bundle for hosts other than
 Vercel. `next.config.ts` switches on `VERCEL`: Vercel keeps a plain `.next` build,
-everything else builds `output: "standalone"` into `dist/`.
+everything else builds `output: "standalone"` into `.next/`.
 
 ```bash
-npm run bundle                  # next build + assemble dist/standalone
-npm run bundle -- --tarball     # ...and dist/wolf-idea-pitch-standalone.tar.gz
-npm run bundle -- --skip-build  # re-assemble only (reuse an existing dist/)
+npm run bundle                  # next build + assemble .next/standalone
+npm run bundle -- --tarball     # ...and .next/wolf-idea-pitch-standalone.tar.gz
+npm run bundle -- --skip-build  # re-assemble only (reuse an existing .next/)
 ```
 
-`dist/standalone/` is runnable as-is: `server.js`, the traced `node_modules`
-(`sharp` included, so `next/image` works), plus `public/` and `dist/static/` —
+`.next/standalone/` is runnable as-is: `server.js`, the traced `node_modules`
+(`sharp` included, so `next/image` works), plus `public/` and `.next/static/` —
 `next build` leaves those two out on purpose, `scripts/build-standalone.mjs`
 copies them in.
 
 ```bash
 # local preview (the standalone server ignores .env* - it must be passed)
-node --env-file=.env.local dist/standalone/server.js
+node --env-file=.env .next/standalone/server.js
 
 # VPS
-cd dist/standalone && PORT=3000 HOSTNAME=0.0.0.0 node server.js
+cd .next/standalone && PORT=3000 HOSTNAME=0.0.0.0 node server.js
 ```
 
 - `PORT` defaults to 3000, `HOSTNAME` to `0.0.0.0`; put nginx/Caddy in front for TLS.
-- Env vars are **not** bundled. `NEXT_PUBLIC_*` are inlined into the client
-  bundle at **build** time on the machine running `npm run bundle`; the server
-  secrets (`FIREBASE_ADMIN_*`, `SMTP_*`, `ADMIN_EMAILS`, `ADMIN_SESSION_SECRET`)
-  are read at **runtime** only.
+- Env vars are **not** bundled, except `NEXT_PUBLIC_SITE_URL` and the public
+  admin path hash, which are inlined at **build** time. The Firebase web API
+  key (`FIREBASE_WEB_API_KEY`), Admin SDK key, SMTP, and `ADMIN_EMAILS` are
+  read at **runtime** only and must not use the `NEXT_PUBLIC_` prefix.
 
 Docker (context = this folder, daemon + network required):
 
 ```bash
 docker build -t wolf-idea-pitch \
-  --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=... \
-  --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=... \
-  --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=... \
-  --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=... \
-  --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=... \
   --build-arg NEXT_PUBLIC_SITE_URL=https://your-domain \
   .
-docker run --env-file .env.local -p 3000:3000 wolf-idea-pitch
+docker run --env-file .env -p 3000:3000 wolf-idea-pitch
 ```
 
 `.dockerignore` excludes `.env*`, so no secret can land in a layer; the `runner`
-stage copies only `dist/standalone`, `public/` and `dist/static/`, runs as the
+stage copies only `.next/standalone`, `public/` and `.next/static/`, runs as the
 unprivileged `node` user, and carries an `/api/health` healthcheck.
 
 **Verified 2026-09-27** (Next.js 16.3.5, Node 24.19.0, Windows, ports 3311–3313):
@@ -189,15 +180,15 @@ unprivileged `node` user, and carries an `/api/health` healthcheck.
 | Check | Result |
 |---|---|
 | `npm run bundle -- --skip-build --tarball` | exit 0; `public/` + 47 static files copied; folder 39.7 MB; tarball 11.7 MB |
-| `node dist/standalone/server.js` (no env) | `/api/health` → `"database":"mock"` plus `[FATAL CONFIG]` — proves `.env*` is not auto-read |
-| `node --env-file=.env.local dist/standalone/server.js` | `/api/health` → `"database":"firebase"`; `/` 200 with `WOLF IDEA PITCH` in the HTML; `/faq` 200; unknown path 404; `/bg.png` 200 `image/png`; `/_next/static/...js` 200; CSP from `proxy.ts` present; `/api/admin/session` 401 |
-| `npm run start` (local, serves `dist/`) | `/api/health` 200 `firebase`, but Next warns `"next start" does not work with "output: standalone"` — use `node dist/standalone/server.js` |
-| `VERCEL=1 npm run build` | exit 0; `.next/next-server.js.nft.json` emitted, `dist/` untouched → the Vercel deploy path is unaffected |
+| `node .next/standalone/server.js` (no env) | `/api/health` → `"database":"mock"` plus `[FATAL CONFIG]` — proves `.env*` is not auto-read |
+| `node --env-file=.env .next/standalone/server.js` | `/api/health` → `"database":"firebase"`; `/` 200 with `WOLF IDEA PITCH` in the HTML; `/faq` 200; unknown path 404; `/bg.png` 200 `image/png`; `/_next/static/...js` 200; CSP from `proxy.ts` present; `/api/admin/session` 401 |
+| `npm run start` (local, serves `.next/`) | `/api/health` 200 `firebase`, but Next warns `"next start" does not work with "output: standalone"` — use `node .next/standalone/server.js` |
+| `VERCEL=1 npm run build` | exit 0; `.next/next-server.js.nft.json` emitted and standalone is off → the Vercel deploy path is unaffected |
 | `docker build` / `docker run` | **not run here** (needs the daemon + network) — verify on the target host |
 
 Do not "simplify" the conditional: Next.js 16.3 stopped writing
 `.next/next-server.js.nft.json` while an adapter is active, but Vercel's
 `onBuildComplete` still reads it, so `output: "standalone"` on Vercel fails every
 deploy (vercel/next.js#96646). Side effect to expect: `next build` rewrites the
-`include` entries in `tsconfig.json` for whichever `distDir` is active — both
-`.next/**` and `dist/**` entries are committed, so `tsc` covers both.
+`include` entries in `tsconfig.json` for the `.next` build folder. Both
+`.next/**` entries are committed, so `tsc` covers the build folder.

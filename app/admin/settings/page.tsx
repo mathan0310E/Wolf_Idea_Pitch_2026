@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminHeader } from "@/components/admin-header";
 import { event } from "@/config/event";
+import { adminHref } from "@/lib/admin-path";
 
 function adminToken(): string | null { try { return sessionStorage.getItem("wolf_admin_session"); } catch { return null; } }
 
@@ -22,7 +23,7 @@ export default function AdminSettingsPage() {
   React.useEffect(() => {
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
     (async () => {
@@ -32,7 +33,7 @@ export default function AdminSettingsPage() {
         });
         if (res.status === 401 || res.status === 403) {
           sessionStorage.removeItem("wolf_admin_session");
-          router.push("/admin/login");
+          router.push(adminHref("/login"));
           return;
         }
         const data = await res.json();
@@ -52,7 +53,7 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
     setIsSaving(true);

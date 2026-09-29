@@ -15,6 +15,10 @@ membership in the `ADMIN_EMAILS` allowlist (strict gate when configured, falling
 back to the `role: "admin"` custom claim otherwise), and a fresh email-OTP 2FA
 check (`otp_verified/{uid}`, 12 h TTL, issued by `POST /api/admin/otp/verify`).
 Every state modification creates an immutable log entry in `auditLogs`.
+The Firebase web API key is `FIREBASE_WEB_API_KEY` and is used only by the
+server. It must not be stored under a `NEXT_PUBLIC_` name, because that
+prefix is copied into the browser bundle. `/api/health` does not return
+project ids or keys.
 The OTP endpoints use the identity-only gate so the challenge can be issued.
 Mail credentials (`SMTP_USER`/`SMTP_PASS`) are server-only environment
 variables, and the API never returns provider text — only a short classified
@@ -32,7 +36,12 @@ failure code (`smtp-auth`, `smtp-<code>`, `smtp-tls`, …).
   (production only). The CSP keeps `'unsafe-inline'` for scripts because Next.js
   hydration needs it without a nonce, and admits the venue map through
   `frame-src https://www.google.com https://maps.google.com`.
-- `next.config.ts` holds a second, fallback copy of these headers for paths
-  outside the proxy matcher (static assets). Where both set the same header,
-  the **proxy value is the one served** — verified: the live response carries a
-  single `Content-Security-Policy` containing the proxy's directives.
+- `lib/security-headers.ts` is the single policy. `proxy.ts` and
+  `next.config.ts` both apply it, so the static-asset fallback cannot drift
+  looser than the document policy. The policy blocks object embeds, framing,
+  and cross-site form posts (`object-src 'none'`, `frame-ancestors 'none'`,
+  `form-action 'self'`), locks unused browser features in `Permissions-Policy`,
+  sets `Cross-Origin-Opener-Policy: same-origin` and
+  `Cross-Origin-Resource-Policy: same-origin`, and disables
+  `X-Powered-By`. `script-src` is `'self'`, `'unsafe-inline'`, and
+  `https://apis.google.com` — not any `https:` origin.

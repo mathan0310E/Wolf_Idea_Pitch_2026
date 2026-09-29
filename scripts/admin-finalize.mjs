@@ -7,18 +7,16 @@
  *   3. mint a custom token, exchange it for a real ID token (client SDK)
  *   4. hit the live gate with it and print status codes only
  *
- * Usage: node --env-file=.env.local scripts/admin-finalize.mjs <uid>
+ * Usage: node --env-file=.env scripts/admin-finalize.mjs <uid>
  *
  * Prints facts/booleans/status codes only — never tokens or secrets.
  */
 import { initializeApp, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { initializeApp as initClient } from "firebase/app";
-import { getAuth as getClientAuth, signInWithCustomToken } from "firebase/auth";
 
 const uid = process.argv[2];
 if (!uid) {
-  console.error("usage: node --env-file=.env.local scripts/admin-finalize.mjs <uid>");
+  console.error("usage: node --env-file=.env scripts/admin-finalize.mjs <uid>");
   process.exit(1);
 }
 
@@ -54,15 +52,32 @@ console.log(
 
 // 4. exchange for a real ID token (picks up the fresh email_verified claim)
 const customToken = await adminAuth.createCustomToken(uid, { role: "admin" });
-const cApp = initClient({
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-});
-const cred = await signInWithCustomToken(getClientAuth(cApp), customToken);
-const idToken = await cred.user.getIdToken();
+const apiKey = process.env.FIREBASE_WEB_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+if (!apiKey) {
+  console.error("FIREBASE_WEB_API_KEY is missing");
+  process.exit(1);
+}
+let idToken = "";
+try {
+  const exchanged = await fetch(
+    "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=" +
+      encodeURIComponent(apiKey),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: customToken, returnSecureToken: true }),
+    }
+  );
+  const payload = await exchanged.json();
+  idToken = payload.idToken || "";
+  if (!exchanged.ok || !idToken) {
+    console.error("token exchange failed", exchanged.status);
+    process.exit(1);
+  }
+} catch {
+  console.error("token exchange failed");
+  process.exit(1);
+}
 
 // 5. prove the gate with the real token — and that junk is still rejected
 async function probe(name, path, token) {

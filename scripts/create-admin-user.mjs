@@ -11,8 +11,8 @@
  *   --reset  if the email already exists, update its password instead of
  *            failing (verification status is kept as-is).
  *
- * Credentials come from .env.local (FIREBASE_ADMIN_*), same as
- * set-admin-claim.mjs. Also add the email to ADMIN_EMAILS in .env.local —
+ * Credentials come from .env (FIREBASE_ADMIN_*), same as
+ * set-admin-claim.mjs. Also add the email to ADMIN_EMAILS in .env —
  * the allowlist is the authorization gate; this script only provisions the
  * identity.
  */
@@ -32,8 +32,8 @@ if (!email || !password || password.length < 6) {
   process.exit(1);
 }
 
-// Load .env.local without printing any values.
-const envPath = resolve(process.cwd(), ".env.local");
+// Load .env without printing any values.
+const envPath = resolve(process.cwd(), ".env");
 if (existsSync(envPath)) {
   for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*"?(.*?)"?\s*$/);
@@ -93,7 +93,7 @@ try {
 
 console.log(
   `\nNext steps:\n` +
-    ` 1. Make sure ADMIN_EMAILS in .env.local includes ${email}.\n` +
+    ` 1. Make sure ADMIN_EMAILS in .env includes ${email}.\n` +
     ` 2. Sign in at /admin/login with this email + password — Firebase\n` +
     `    sends the verification email, and access stays blocked (401/403)\n` +
     `    until the address is verified.\n` +

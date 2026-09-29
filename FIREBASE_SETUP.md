@@ -2,10 +2,10 @@
 
 ## 1. Create Firebase Project
 1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project.
-   The project ID must match `.firebaserc` and `.env.local` — for this repo it is
+   The project ID must match `.firebaserc` and `.env` — for this repo it is
    `wolf-idea-pitch` (if you create a different one, update `.firebaserc` too).
-2. Register a Web App to get `apiKey`, `authDomain`, `projectId`, etc. (no Storage bucket is needed — payment screenshots are stored as Base64 in Firestore).
-3. Copy `.env.example` to `.env.local` and fill in the values (never commit `.env.local`).
+2. Register a Web App to get the web API key (no Storage bucket is needed — payment screenshots are stored as Base64 in Firestore). Put that key in `FIREBASE_WEB_API_KEY` only. Do not put it in a `NEXT_PUBLIC_` variable; the browser must not receive it.
+3. Copy `.env.example` to `.env` and fill in the values (never commit `.env`).
 4. Set `NEXT_PUBLIC_SITE_URL` to the production URL (used for SEO metadata).
 
 ## 2. Enable Firebase Services
@@ -56,7 +56,7 @@ Authorization is enforced **server-side on every admin API call**
 gates:
 
 1. **`ADMIN_EMAILS` allowlist (recommended — this is what you asked for).**
-   Put your admin account email in `.env.local`:
+   Put your admin account email in `.env`:
    ```bash
    ADMIN_EMAILS="your-admin-email@gmail.com"
    ```
@@ -65,7 +65,7 @@ gates:
    setup needed. Add the same variable in Vercel for production.
 
 2. **`role: "admin"` custom claim (fallback when `ADMIN_EMAILS` is empty).**
-   Run the bundled setter (uses the service account already in `.env.local`):
+   Run the bundled setter (uses the service account already in `.env`):
    ```bash
    node scripts/set-admin-claim.mjs <uid-or-email>   # e.g. your Google email
    node scripts/set-admin-claim.mjs --check          # verify credentials offline
@@ -90,7 +90,7 @@ One-time setup (Gmail as the sender):
 1. Enable **2-Step Verification** on the sending Google account, then create an
    **App Password** (Google Account → Security → App passwords). The
    16-character App Password goes into `SMTP_PASS` — never the account password.
-2. Put the mailbox and the App Password in `.env.local` and the same
+2. Put the mailbox and the App Password in `.env` and the same
    server-only variables in Vercel:
 
    ```bash

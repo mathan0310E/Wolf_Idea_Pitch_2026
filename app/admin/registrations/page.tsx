@@ -8,12 +8,14 @@ import {
   Download,
   Eye,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { StatusChip } from "@/components/ui/status-chip";
 import { AdminHeader } from "@/components/admin-header";
+import { adminHref } from "@/lib/admin-path";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatINR, teamTypeLabel } from "@/config/event";
@@ -47,7 +49,7 @@ export default function AdminRegistrationsPage() {
     async (opts?: { resetPage?: boolean }) => {
       const token = adminToken();
       if (!token) {
-        router.push("/admin/login");
+        router.push(adminHref("/login"));
         return;
       }
       setIsLoading(true);
@@ -65,7 +67,7 @@ export default function AdminRegistrationsPage() {
         });
         if (res.status === 401 || res.status === 403) {
           sessionStorage.removeItem("wolf_admin_session");
-          router.push("/admin/login");
+          router.push(adminHref("/login"));
           return;
         }
         const data = await res.json();
@@ -85,7 +87,7 @@ export default function AdminRegistrationsPage() {
   React.useEffect(() => {
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial admin table load from API
@@ -108,7 +110,7 @@ export default function AdminRegistrationsPage() {
 
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
 
@@ -129,7 +131,7 @@ export default function AdminRegistrationsPage() {
 
       if (res.status === 401 || res.status === 403) {
         sessionStorage.removeItem("wolf_admin_session");
-        router.push("/admin/login");
+        router.push(adminHref("/login"));
         return;
       }
 
@@ -158,10 +160,57 @@ export default function AdminRegistrationsPage() {
     }
   };
 
+  const handleRemove = async (regId: string) => {
+    const reason = window.prompt(
+      "Reason for removing this registration (a backup is stored before it is deleted):"
+    );
+    if (!reason || reason.trim().length < 3) {
+      alert("A removal reason of at least 3 characters is required. Nothing was deleted.");
+      return;
+    }
+    if (!window.confirm("Remove this registration? The live record is deleted only after a backup is stored.")) {
+      return;
+    }
+
+    const token = adminToken();
+    if (!token) {
+      router.push(adminHref("/login"));
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await fetch("/api/admin/registrations", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ registrationId: regId, reason: reason.trim() }),
+      });
+      if (res.status === 401 || res.status === 403) {
+        sessionStorage.removeItem("wolf_admin_session");
+        router.push(adminHref("/login"));
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "Remove failed. The registration was not deleted.");
+        return;
+      }
+      setSelectedReg(null);
+      await fetchRegistrations();
+    } catch {
+      alert("Remove failed. The registration was not deleted.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleExport = async () => {
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
     const res = await fetch("/api/admin/export", {
@@ -375,6 +424,14 @@ export default function AdminRegistrationsPage() {
                       <span>Reject Submission</span>
                     </button>
                   </div>
+                  <button
+                    disabled={isProcessing}
+                    onClick={() => handleRemove(selectedReg.registrationId)}
+                    className="w-full py-3 rounded-xl border border-white/15 text-zinc-300 hover:text-white hover:bg-white/5 font-bold uppercase text-xs transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Remove and keep backup</span>
+                  </button>
                 </div>
               </div>
             </Card>

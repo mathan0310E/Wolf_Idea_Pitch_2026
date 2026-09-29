@@ -5,13 +5,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Shield, Menu, X, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { adminHref } from "@/lib/admin-path";
 
 const adminNavItems = [
-  { label: "Dashboard", href: "/admin/dashboard" },
-  { label: "Registrations", href: "/admin/registrations" },
-  { label: "Payments Queue", href: "/admin/payments" },
-  { label: "Settings", href: "/admin/settings" },
-  { label: "Audit Logs", href: "/admin/audit-logs" },
+  { label: "Dashboard", href: adminHref("/dashboard") },
+  { label: "Registrations", href: adminHref("/registrations") },
+  { label: "Payments Queue", href: adminHref("/payments") },
+  { label: "Settings", href: adminHref("/settings") },
+  { label: "Audit Logs", href: adminHref("/audit-logs") },
 ];
 
 export function AdminHeader({ title }: { title: string }) {
@@ -41,10 +42,49 @@ export function AdminHeader({ title }: { title: string }) {
   }, [pathname, mobileMenuOpen]);
 
   const router = useRouter();
+
+  React.useEffect(() => {
+    const token = (() => {
+      try {
+        return sessionStorage.getItem("wolf_admin_session");
+      } catch {
+        return null;
+      }
+    })();
+    if (!token) return;
+
+    const key = `wolf_admin_seen:${pathname}`;
+    const last = Number(sessionStorage.getItem(key) || "0");
+    if (Date.now() - last < 10 * 60 * 1000) return;
+    sessionStorage.setItem(key, String(Date.now()));
+
+    void fetch("/api/admin/activity", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ page: pathname }),
+      keepalive: true,
+    }).catch(() => {
+      sessionStorage.removeItem(key);
+    });
+  }, [pathname]);
+
   const handleLogout = () => {
-    sessionStorage.removeItem("wolf_admin_session");
-    void fetch("/api/admin/logout", { method: "POST", keepalive: true }).finally(() => {
-      router.push("/admin/login");
+    let token: string | null = null;
+    try {
+      token = sessionStorage.getItem("wolf_admin_session");
+      sessionStorage.removeItem("wolf_admin_session");
+    } catch {
+      token = null;
+    }
+    void fetch("/api/admin/logout", {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      keepalive: true,
+    }).finally(() => {
+      router.push(adminHref("/login"));
     });
   };
 

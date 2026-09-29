@@ -2,7 +2,7 @@
 // End-to-end proof of the admin gate: mint a real ID token for the admin user
 // (Admin SDK custom token -> identitytoolkit REST exchange, no client SDK needed),
 // decode its claims, then call the live gate endpoints. Prints no secrets.
-// Run: node --env-file=.env.local scripts/admin-e2e.mjs [uid]
+// Run: node --env-file=.env scripts/admin-e2e.mjs [uid]
 import { initializeApp, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
@@ -12,11 +12,11 @@ const BASE = process.env.BASE_URL || "http://localhost:3000";
 const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
 const privateKey = (process.env.FIREBASE_ADMIN_PRIVATE_KEY || "").replace(/\\n/g, "\n");
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const apiKey = process.env.FIREBASE_WEB_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 if (!projectId || !clientEmail || !privateKey || !apiKey) {
   console.error(
-    "Missing env vars. Run with: node --env-file=.env.local scripts/admin-e2e.mjs"
+    "Missing env vars. Run with: node --env-file=.env scripts/admin-e2e.mjs"
   );
   process.exit(1);
 }

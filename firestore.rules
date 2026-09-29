@@ -2,48 +2,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    // NOTE: direct client access is intentionally custom-claim-only. The
-    // server APIs additionally authorize the ADMIN_EMAILS allowlist (see
-    // lib/admin-auth.ts) and reach Firestore via the Admin SDK, which bypasses
-    // these rules. Do NOT hardcode organizer emails here — rules files are
-    // deployed and visible; keep PII in ADMIN_EMAILS (.env.local / Vercel).
+    // Direct client access is custom-claim-only, and even an admin claim
+    // cannot delete or rewrite records from the browser. Deletes, backups,
+    // and audit logs are written only by the server Admin SDK (which bypasses
+    // these rules) after the ADMIN_EMAILS allowlist and email OTP checks.
+    // Do NOT hardcode organizer emails here — rules are deployed and visible.
     function isAdmin() {
       return request.auth != null && request.auth.token.role == 'admin';
     }
 
-    // Default deny all
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Registrations collection
+    // Registrations: an admin claim may read. Create, update, and delete
+    // from the client are removed. Removal goes through the admin API,
+    // which copies the record into `backups` before deleting it.
     match /registrations/{registrationId} {
-      // Public cannot write directly to registrations (gated via API route)
+      allow read: if isAdmin();
       allow create, update, delete: if false;
-      
-      // Admin can read and write all registrations
-      allow read, write: if isAdmin();
     }
 
-    // Payments collection
+    // Payment screenshots (Base64) never leave through the client SDK.
     match /payments/{paymentId} {
-      allow read, write: if isAdmin();
+      allow read, create, update, delete: if false;
     }
 
-    // Settings collection
+    // Only the public event gate is readable. The sequence counter is not.
     match /settings/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read: if docId == 'event';
+      allow create, update, delete: if false;
     }
 
-    // Audit logs collection
+    // Audit logs are append-only on the server. Clients cannot read,
+    // edit, or delete them.
     match /auditLogs/{logId} {
-      allow read, write: if isAdmin();
+      allow read, create, update, delete: if false;
     }
 
-    // Admin 2FA OTP state — server-side only (Admin SDK bypasses rules).
-    // Clients must never read or write OTP tokens or verification records.
+    // Deleted-record archives. No client access, including delete.
+    match /backups/{backupId} {
+      allow read, create, update, delete: if false;
+    }
+    match /backupScreenshots/{backupId} {
+      allow read, create, update, delete: if false;
+    }
+
     match /otp_tokens/{uid} {
       allow read, write: if false;
     }
@@ -51,9 +55,8 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Admin profiles
     match /admins/{adminId} {
-      allow read, write: if isAdmin();
+      allow read, create, update, delete: if false;
     }
   }
 }

@@ -28,22 +28,22 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 export function CountdownTimer({ targetDate, className }: CountdownTimerProps) {
   const target = new Date(targetDate).getTime();
-  const [timeLeft, setTimeLeft] = React.useState<TimeLeft>(() =>
-    getTimeLeft(target)
-  );
+  // Stay null through SSR and hydration. Date.now() during the first render
+  // can tick between the server HTML and the client, which fails hydration.
+  const [timeLeft, setTimeLeft] = React.useState<TimeLeft | null>(null);
 
   React.useEffect(() => {
-    const id = window.setInterval(() => {
-      setTimeLeft(getTimeLeft(target));
-    }, 1_000);
+    const tick = () => setTimeLeft(getTimeLeft(target));
+    tick();
+    const id = window.setInterval(tick, 1_000);
     return () => window.clearInterval(id);
   }, [target]);
 
   const units = [
-    { label: "Days", value: String(timeLeft.days) },
-    { label: "Hours", value: pad(timeLeft.hours) },
-    { label: "Mins", value: pad(timeLeft.minutes) },
-    { label: "Secs", value: pad(timeLeft.seconds) },
+    { label: "Days", value: timeLeft ? String(timeLeft.days) : "--" },
+    { label: "Hours", value: timeLeft ? pad(timeLeft.hours) : "--" },
+    { label: "Mins", value: timeLeft ? pad(timeLeft.minutes) : "--" },
+    { label: "Secs", value: timeLeft ? pad(timeLeft.seconds) : "--" },
   ];
 
   return (
@@ -58,9 +58,9 @@ export function CountdownTimer({ targetDate, className }: CountdownTimerProps) {
                 {/* Re-keying on the value remounts the node, replaying the tick
                     animation exactly once per second — no JS timer per digit. */}
                 <span
-                  key={isSeconds ? unit.value : unit.label}
+                  key={isSeconds && timeLeft ? unit.value : unit.label}
                   className={`font-mono text-2xl sm:text-4xl font-extrabold text-white tabular-nums${
-                    isSeconds ? " animate-tick" : ""
+                    isSeconds && timeLeft ? " animate-tick" : ""
                   }`}
                 >
                   {unit.value}

@@ -2,17 +2,17 @@
 /**
  * Build the self-hosted (VPS / Docker) bundle for wolf_idea_pitch.
  *
- * `next build` with `output: "standalone"` + `distDir: "dist"` (see
- * next.config.ts) emits `dist/standalone/` — a traced `server.js` plus the only
+ * `next build` with `output: "standalone"` (see next.config.ts) emits
+ * `.next/standalone/` — a traced `server.js` plus the only
  * `node_modules` files the server needs, so the target machine never runs
  * `npm install`. Next.js deliberately leaves `public/` and `<distDir>/static`
  * out of that folder; this script copies them in so the folder is directly
  * runnable, and can pack it into a tarball.
  *
  * Usage:
- *   npm run bundle                  build + assemble dist/standalone
- *   npm run bundle -- --skip-build  assemble only (reuse an existing dist/)
- *   npm run bundle -- --tarball     also write dist/wolf-idea-pitch-standalone.tar.gz
+ *   npm run bundle                  build + assemble .next/standalone
+ *   npm run bundle -- --skip-build  assemble only (reuse an existing .next/)
+ *   npm run bundle -- --tarball     also write .next/wolf-idea-pitch-standalone.tar.gz
  *
  * Runtime secrets are NOT bundled — pass them to the server (DEPLOYMENT.md
  * "Self-hosting (VPS / Docker)"). VERCEL is stripped from the build env on
@@ -26,8 +26,8 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-// Must match DIST_DIR of the non-Vercel branch in next.config.ts.
-const DIST = "dist";
+// Next.js default build folder. Do not rename this; Vercel also uses `.next`.
+const DIST = ".next";
 const STANDALONE = join(DIST, "standalone");
 const SERVER = join(STANDALONE, "server.js");
 const TARBALL = join(DIST, "wolf-idea-pitch-standalone.tar.gz");
@@ -54,8 +54,8 @@ function fail(message) {
 /** Run `next build` on the standalone branch, letting its output through. */
 function build() {
   const env = { ...process.env };
-  delete env.VERCEL; // keep next.config.ts on the standalone/dist branch
-  log("build", "npm run build  (output: standalone, distDir: dist)");
+  delete env.VERCEL; // keep next.config.ts on the standalone branch
+  log("build", "npm run build  (output: standalone, build folder: .next)");
   const result = spawnSync("npm run build", { cwd: root, env, stdio: "inherit", shell: true });
   if (result.status !== 0) {
     fail(`npm run build exited with ${result.status === null ? `signal ${result.signal}` : result.status}`);
@@ -91,7 +91,7 @@ async function main() {
   if (!existsSync(join(root, SERVER))) {
     fail(
       `${SERVER} was not produced — next.config.ts must keep ` +
-        "`output: 'standalone'` + `distDir: 'dist'` for non-Vercel builds"
+        "`output: 'standalone'` for non-Vercel builds, with the default `.next` folder"
     );
   }
 
@@ -104,7 +104,7 @@ async function main() {
   log("done", `runnable bundle at ${STANDALONE}`);
   console.log(`
 [bundle] next steps
-  local smoke test   node --env-file=.env.local ${SERVER.replace(/\\/g, "/")}
+  local smoke test   node --env-file=.env ${SERVER.replace(/\\/g, "/")}
   on a VPS           cd ${STANDALONE} && PORT=3000 HOSTNAME=0.0.0.0 node server.js
   in Docker          docker build -t wolf-idea-pitch .  (see Dockerfile)
 ${wantTarball ? `[bundle] tarball            ${TARBALL.replace(/\\/g, "/")}\n` : ""}`);

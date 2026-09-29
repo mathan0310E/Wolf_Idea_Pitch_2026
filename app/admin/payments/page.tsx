@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { AdminHeader } from "@/components/admin-header";
 import { Registration } from "@/lib/types";
+import { adminHref } from "@/lib/admin-path";
 
 function adminToken(): string | null {
   try {
@@ -26,7 +27,7 @@ export default function AdminPaymentsQueuePage() {
   React.useEffect(() => {
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
     (async () => {
@@ -37,7 +38,7 @@ export default function AdminPaymentsQueuePage() {
         );
         if (res.status === 401 || res.status === 403) {
           sessionStorage.removeItem("wolf_admin_session");
-          router.push("/admin/login");
+          router.push(adminHref("/login"));
           return;
         }
         const data = await res.json();
@@ -85,7 +86,7 @@ export default function AdminPaymentsQueuePage() {
                   Oldest first — open each record in the master table to approve or reject proof.
                 </p>
               </div>
-              <Link href="/admin/registrations"
+              <Link href={adminHref("/registrations")}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#E50914] text-white font-bold text-xs uppercase"
               >
                 Go to Registrations Master Table
@@ -99,7 +100,7 @@ export default function AdminPaymentsQueuePage() {
                   <span className="text-white font-bold"> · {r.teamName}</span>
                   <span className="text-zinc-400 font-mono"> · UTR {r.utr || "—"}</span>
                 </div>
-                <Link href="/admin/registrations"
+                <Link href={adminHref("/registrations")}
                   className="text-xs font-bold text-[#E50914] hover:underline"
                 >
                   Inspect →

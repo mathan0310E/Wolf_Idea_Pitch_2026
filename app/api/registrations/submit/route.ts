@@ -140,6 +140,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    const storedScreenshotBase64 = screenshotBytes.toString("base64");
     // Magic-number check: JPEG FF D8 FF, PNG 89 50 4E 47, WEBP RIFF....WEBP.
     const magicOk =
       (screenshotMimeType === "image/jpeg" &&
@@ -272,7 +273,7 @@ export async function POST(req: NextRequest) {
       amount: totalAmount, // server-calculated: memberCount × ₹300. Never trusted from client.
       transactionId,
       utr,
-      screenshotBase64,
+      screenshotBase64: storedScreenshotBase64,
       screenshotMimeType,
       screenshotSize: screenshotBytes.length,
       status: "SUBMITTED",
@@ -285,7 +286,7 @@ export async function POST(req: NextRequest) {
         registrationId,
         transactionId,
         utr,
-        screenshotBase64,
+        screenshotBase64: storedScreenshotBase64,
         screenshotMimeType,
       })
     ) {

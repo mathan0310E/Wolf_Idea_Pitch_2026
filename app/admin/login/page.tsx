@@ -3,13 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  sendEmailVerification,
-  signOut,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { adminHref } from "@/lib/admin-path";
 import { AlertCircle, MailCheck, RotateCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
@@ -26,6 +20,7 @@ export default function AdminLoginPage() {
   const [stage, setStage] = React.useState<"form" | "otp">("form");
   const [otpCode, setOtpCode] = React.useState("");
   const [cooldown, setCooldown] = React.useState(0);
+  const pendingToken = React.useRef("");
 
   React.useEffect(() => {
     if (cooldown <= 0) return;
@@ -44,14 +39,14 @@ export default function AdminLoginPage() {
     const data = (await res.json().catch(() => ({}))) as { error?: string };
 
     if (!res.ok) {
-      await signOut(auth); // not an authorized admin — drop the session
+      pendingToken.current = "";
       setStage("form");
       setError(data.error || "This account is not authorized for admin access.");
       return;
     }
 
     sessionStorage.setItem("wolf_admin_session", idToken);
-    router.push("/admin/dashboard");
+    router.push(adminHref("/dashboard"));
   };
 
   const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -61,35 +56,25 @@ export default function AdminLoginPage() {
     setNotice("");
 
     try {
-      const cred = await signInWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password
-      );
-      const user = cred.user;
-      await user.reload(); // pick up a verification completed in another tab
-
-      if (!user.emailVerified) {
-        let verificationSent = false;
-        try {
-          await sendEmailVerification(user);
-          verificationSent = true;
-        } catch {
-          verificationSent = false;
-        }
-        await signOut(auth);
-        setError(
-          verificationSent
-            ? "This email address is not verified. We sent a verification link; open it, then sign in again."
-            : "This email address is not verified and the verification email could not be sent. Contact the event organizer."
-        );
+      const signInRes = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const signInData = (await signInRes.json().catch(() => ({}))) as {
+        error?: string;
+        idToken?: string;
+      };
+      if (!signInRes.ok || !signInData.idToken) {
+        pendingToken.current = "";
+        setError(signInData.error || "Sign-in failed. Please try again.");
         return;
       }
 
-      // 2FA step 1 — email + password passed; ask the server to email a
-      // one-time code. The session is only established after step 2 verifies
-      // that code (handleVerifyOtp -> finishSignIn).
-      const idToken = await user.getIdToken(true);
+      // 2FA step 1 — email + password passed on the server; ask the server
+      // to email a one-time code. The session is stored only after step 2.
+      const idToken = signInData.idToken;
+      pendingToken.current = idToken;
       const otpRes = await fetch("/api/admin/otp/send", {
         method: "POST",
         headers: {
@@ -106,7 +91,7 @@ export default function AdminLoginPage() {
       };
 
       if (!otpRes.ok) {
-        await signOut(auth);
+        pendingToken.current = "";
         setError(otpData.error || "Could not send the verification code.");
         return;
       }
@@ -116,33 +101,13 @@ export default function AdminLoginPage() {
       setNotice(
         otpData.devNotice ||
           (otpData.delivery === "SUCCESS"
-            ? `A 6-digit sign-in code was emailed to ${user.email} and expires in 5 minutes. Check the spam folder if it is not in the inbox.`
-            : `A 6-digit sign-in code was generated for ${user.email}, but email delivery could not be confirmed. It expires in 5 minutes.`)
+            ? `A 6-digit sign-in code was emailed to ${email.trim()} and expires in 5 minutes. Check the spam folder if it is not in the inbox.`
+            : `A 6-digit sign-in code was generated for ${email.trim()}, but email delivery could not be confirmed. It expires in 5 minutes.`)
       );
       setCooldown(60);
-    } catch (err: unknown) {
-      const code = (err as { code?: string })?.code ?? "";
-      if (
-        code === "auth/invalid-credential" ||
-        code === "auth/user-not-found" ||
-        code === "auth/wrong-password"
-      ) {
-        setError("Incorrect email or password.");
-      } else if (code === "auth/too-many-requests") {
-        setError(
-          "Too many failed attempts. Please try again in a few minutes."
-        );
-      } else if (code === "auth/user-disabled") {
-        setError("This account has been disabled.");
-      } else if (code === "auth/network-request-failed") {
-        setError("Network error. Check your connection and try again.");
-      } else if (code === "auth/operation-not-allowed") {
-        setError(
-          "Email/password sign-in is not enabled for this Firebase project. Enable it in Firebase Console → Authentication → Sign-in method."
-        );
-      } else {
-        setError("Sign-in failed. Please try again.");
-      }
+    } catch {
+      pendingToken.current = "";
+      setError("Sign-in failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -153,12 +118,11 @@ export default function AdminLoginPage() {
     setNotice("");
     setIsLoading(true);
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      const freshToken = pendingToken.current;
+      if (!freshToken) {
         setStage("form");
         return;
       }
-      const freshToken = await currentUser.getIdToken(true);
       const res = await fetch("/api/admin/otp/send", {
         method: "POST",
         headers: {
@@ -193,15 +157,14 @@ export default function AdminLoginPage() {
 
   const handleVerifyOtp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    const freshToken = pendingToken.current;
+    if (!freshToken) {
       setStage("form");
       return;
     }
     setIsLoading(true);
     setError("");
     try {
-      const freshToken = await currentUser.getIdToken(true);
       const res = await fetch("/api/admin/otp/verify", {
         method: "POST",
         headers: {
@@ -231,18 +194,25 @@ export default function AdminLoginPage() {
       return;
     }
     try {
-      // Enumeration-safe: Firebase only emails registered accounts.
-      await sendPasswordResetEmail(auth, email.trim());
-      setNotice(
-        "If that email is registered, a password reset link has been sent."
-      );
-    } catch (err: unknown) {
-      const code = (err as { code?: string })?.code ?? "";
-      if (code === "auth/too-many-requests") {
-        setError("Too many requests. Please try again in a few minutes.");
-      } else {
-        setError("Could not send a reset email. Please try again.");
+      const res = await fetch("/api/admin/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        setError(data.error || "Could not send a reset email. Please try again.");
+        return;
       }
+      setNotice(
+        data.message ||
+          "If that email is registered, a password reset link has been sent."
+      );
+    } catch {
+      setError("Could not send a reset email. Please try again.");
     }
   };
 
@@ -348,8 +318,8 @@ export default function AdminLoginPage() {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={async () => {
-                    await signOut(auth);
+                  onClick={() => {
+                    pendingToken.current = "";
                     setOtpCode("");
                     setStage("form");
                     setError("");

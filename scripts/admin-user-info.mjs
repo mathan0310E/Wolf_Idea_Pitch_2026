@@ -2,7 +2,7 @@
 // Prints NON-SECRET facts about a Firebase Auth user so admin configuration
 // can be verified safely (uid / email / verified / claim / allowlist match).
 // Never prints credentials. Usage:
-//   node --env-file=.env.local scripts/admin-user-info.mjs <uid-or-email>
+//   node --env-file=.env scripts/admin-user-info.mjs <uid-or-email>
 import { initializeApp, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 
@@ -18,7 +18,7 @@ if (
   !FIREBASE_ADMIN_CLIENT_EMAIL ||
   !FIREBASE_ADMIN_PRIVATE_KEY
 ) {
-  console.error("missing-admin-creds: set FIREBASE_ADMIN_* in .env.local");
+  console.error("missing-admin-creds: set FIREBASE_ADMIN_* in .env");
   process.exit(1);
 }
 
@@ -33,7 +33,7 @@ initializeApp({
 const who = process.argv[2];
 if (!who) {
   console.error(
-    "usage: node --env-file=.env.local scripts/admin-user-info.mjs <uid-or-email>"
+    "usage: node --env-file=.env scripts/admin-user-info.mjs <uid-or-email>"
   );
   process.exit(1);
 }

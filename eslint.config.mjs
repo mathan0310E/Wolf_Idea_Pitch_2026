@@ -12,8 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // This repo also builds the self-hosted standalone bundle into dist/
-    // (see next.config.ts) - generated output must never be linted.
+    // Leftover folder from when the build directory was named dist/.
     "dist/**",
 ]),
   {

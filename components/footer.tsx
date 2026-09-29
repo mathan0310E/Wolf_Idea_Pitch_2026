@@ -130,9 +130,12 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/50">
           <p>© 2026 Cyber Wolf. All rights reserved. WOLF IDEA PITCH 2026.</p>
-          <p className="font-mono text-[11px]">
-            Security • Compliance • Innovation
-          </p>
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2" aria-label="Legal">
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+            <Link href="/policy" className="hover:text-white transition-colors">Policy</Link>
+            <Link href="/security" className="hover:text-white transition-colors">Security</Link>
+          </nav>
         </div>
       </div>
     </footer>

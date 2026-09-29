@@ -29,8 +29,8 @@ A Next.js application for idea submission and registration with secure payment v
    `
 
 2. **Configure environment variables**
-   - Copy .env.example to .env.local
-   - Fill in Firebase web config (NEXT_PUBLIC_FIREBASE_*)
+   - Copy .env.example to .env
+   - Set FIREBASE_WEB_API_KEY (server only — never NEXT_PUBLIC_)
    - Fill in server-only Firebase Admin credentials (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)
    - Set NEXT_PUBLIC_SITE_URL to your app URL (e.g., http://localhost:3000 or production URL)
    - Set ADMIN_EMAILS as a comma-separated list of admin email addresses
@@ -55,7 +55,7 @@ pm run build | Build production application |
 pm run start | Start production server |
 | 
 pm run lint | Run ESLint |
-| `npm run bundle` | Build the self-hosted `dist/standalone` bundle (`-- --tarball`, `-- --skip-build`) |
+| `npm run bundle` | Build the self-hosted `.next/standalone` bundle (`-- --tarball`, `-- --skip-build`) |
 
 ## Build targets
 
@@ -65,18 +65,18 @@ var so that neither host can break the other:
 | Target | Build | Output | Runner |
 |---|---|---|---|
 | Vercel (production host) | `VERCEL=1 next build` | `.next` | Vercel's Next.js builder |
-| Self-hosted (VPS / Docker) | `npm run bundle` or `docker build` | `dist/standalone` (`server.js` + traced `node_modules`, plus `public/` and `dist/static/`) | `node server.js` |
+| Self-hosted (VPS / Docker) | `npm run bundle` or `docker build` | `.next/standalone` (`server.js` + traced `node_modules`, plus `public/` and `.next/static/`) | `node server.js` |
 
 - `output: "standalone"` is on **only** when `VERCEL` is unset. Next.js 16.3 no longer
   writes `.next/next-server.js.nft.json` while an adapter is active but Vercel's
   `onBuildComplete` still reads it, so standalone on Vercel fails the deploy
   (vercel/next.js#96646). Do not make that conditional unconditional.
-- Local preview of the bundle: `node --env-file=.env.local dist/standalone/server.js`.
-  (`npm run start` also serves `dist/` locally, but Next warns that `next start` is not
+- Local preview of the bundle: `node --env-file=.env .next/standalone/server.js`.
+  (`npm run start` also serves `.next/` locally, but Next warns that `next start` is not
   the runner for standalone output.)
 - The standalone server does **not** read `.env*` itself — pass runtime secrets with
   `--env-file` / `-e`. `PORT` defaults to 3000, `HOSTNAME` to `0.0.0.0`.
-- `npm run bundle -- --tarball` also writes `dist/wolf-idea-pitch-standalone.tar.gz`;
+- `npm run bundle -- --tarball` also writes `.next/wolf-idea-pitch-standalone.tar.gz`;
   `npm run bundle -- --skip-build` re-assembles without rebuilding.
 - Full VPS / Docker steps, env-var split and verification evidence:
   DEPLOYMENT.md → "Self-hosting (VPS / Docker)".
@@ -100,7 +100,8 @@ var so that neither host can break the other:
 - Admin authentication enforced via ADMIN_EMAILS allowlist and Firebase Admin SDK
 - Email OTP verification required for admin sessions (otp_verified/{uid} valid for 12 hours)
 - All admin actions are logged to immutable audit logs
-- Direct Firestore admin access requires equest.auth.token.role === 'admin'
+- Direct Firestore admin access requires 
+equest.auth.token.role === 'admin'
 
 ## Security
 

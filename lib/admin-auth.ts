@@ -103,9 +103,7 @@ export async function requireAdminIdentity(
         return {
           error: NextResponse.json(
             {
-              error: `Forbidden: ${
-                decoded.email || "this account"
-              } is not on the admin allowlist (ADMIN_EMAILS).`,
+              error: "Forbidden: this account is not authorized for admin access.",
             },
             { status: 403 }
           ),

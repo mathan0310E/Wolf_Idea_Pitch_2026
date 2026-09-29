@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { NextResponse } from "next/server";
+import { adminBasePath, adminHref } from "@/lib/admin-path";
 
 /**
  * Server-side page gate for the admin area.
@@ -20,7 +21,7 @@ export const ADMIN_GATE_COOKIE = "wolf_admin_gate";
 /** Matches OTP_SESSION_TTL_MS in lib/admin-auth.ts. */
 export const ADMIN_GATE_TTL_SECONDS = 12 * 60 * 60;
 
-const ADMIN_GATE_PATH = "/admin";
+const ADMIN_GATE_PATH = adminBasePath();
 const TOKEN_VERSION = "v1";
 const UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 const EXPIRY_PATTERN = /^\d{13}$/;
@@ -118,4 +119,4 @@ export function clearAdminGateCookie<T extends NextResponse>(response: T): T {
   return response;
 }
 
-export const ADMIN_GATE_PATHS = { login: "/admin/login" };
+export const ADMIN_GATE_PATHS = { login: adminHref("/login") };

@@ -16,7 +16,7 @@
 # next.js
 /.next/
 /out/
-# self-hosted standalone bundle (npm run bundle) - see DEPLOYMENT.md
+# old build folder name; the build folder is now .next
 /dist/
 # bundle archives - hundreds of MB, GitHub rejects blobs over 100 MB
 /dist*.zip

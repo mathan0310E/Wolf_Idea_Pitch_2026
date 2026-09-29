@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { writeAuditLog } from "@/lib/admin-audit";
+import { archiveDocument } from "@/lib/backup";
 import type { Registration } from "@/lib/types";
 
 /**
@@ -98,6 +100,106 @@ export async function GET(req: NextRequest) {
     console.error("Admin Registrations Feed Error:", error);
     return NextResponse.json(
       { error: "Failed to load registrations." },
+      { status: 500 }
+    );
+  }
+}
+
+const REGISTRATION_ID = /^WOLF-\d{4}-\d{5}$/;
+
+/**
+ * DELETE /api/admin/registrations
+ * Body: { registrationId, reason }
+ * Copies the registration and its payment (including the screenshot archive)
+ * into server-only backup collections, then deletes the live documents.
+ */
+export async function DELETE(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if ("error" in auth) return auth.error;
+
+  let body: { registrationId?: unknown; reason?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+
+  const registrationId =
+    typeof body.registrationId === "string" ? body.registrationId.trim() : "";
+  const reason = typeof body.reason === "string" ? body.reason.trim() : "";
+
+  if (!REGISTRATION_ID.test(registrationId)) {
+    return NextResponse.json({ error: "Unknown registration." }, { status: 400 });
+  }
+  if (reason.length < 3 || reason.length > 300) {
+    return NextResponse.json(
+      { error: "A removal reason of 3–300 characters is required." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const regRef = adminDb.collection("registrations").doc(registrationId);
+    const regSnap = await regRef.get();
+    if (!regSnap.exists) {
+      return NextResponse.json({ error: "Registration not found." }, { status: 404 });
+    }
+    const registration = (regSnap.data() || {}) as Record<string, unknown>;
+
+    const paymentId = `PAY-${registrationId}`;
+    const paymentRef = adminDb.collection("payments").doc(paymentId);
+    const paymentSnap = await paymentRef.get();
+    const payment = paymentSnap.exists
+      ? ((paymentSnap.data() || {}) as Record<string, unknown>)
+      : null;
+
+    const registrationBackupId = await archiveDocument({
+      sourceCollection: "registrations",
+      sourceId: registrationId,
+      data: registration,
+      actorUid: auth.admin.uid,
+      reason,
+    });
+
+    let paymentBackupId: string | null = null;
+    try {
+      if (payment) {
+        paymentBackupId = await archiveDocument({
+          sourceCollection: "payments",
+          sourceId: paymentId,
+          data: payment,
+          actorUid: auth.admin.uid,
+          reason,
+        });
+      }
+    } catch (backupError) {
+      await adminDb.collection("backups").doc(registrationBackupId).delete().catch(() => undefined);
+      throw backupError;
+    }
+
+    if (payment) await paymentRef.delete();
+    await regRef.delete();
+
+    await writeAuditLog({
+      actorUid: auth.admin.uid,
+      action: "REGISTRATION_REMOVED",
+      targetId: registrationId,
+      after: {
+        reason,
+        registrationBackupId,
+        paymentBackupId,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      registrationBackupId,
+      paymentBackupId,
+    });
+  } catch (error) {
+    console.error("Admin registration remove failed:", error);
+    return NextResponse.json(
+      { error: "Failed to back up and remove the registration." },
       { status: 500 }
     );
   }

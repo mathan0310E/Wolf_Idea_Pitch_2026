@@ -5,20 +5,14 @@
 # "Self-hosting (VPS / Docker)" for the full checklist.
 #
 #   docker build -t wolf-idea-pitch \
-#     --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=... \
-#     --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=... \
-#     --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=... \
-#     --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=... \
-#     --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=... \
 #     --build-arg NEXT_PUBLIC_SITE_URL=https://your-domain \
 #     .
-#   docker run --env-file .env.local -p 3000:3000 wolf-idea-pitch
+#   docker run --env-file .env -p 3000:3000 wolf-idea-pitch
 #
-# NEXT_PUBLIC_* values are inlined into the client bundle at BUILD time, so they
-# have to arrive as build args. Server-side secrets (Firebase Admin SDK, SMTP,
-# ADMIN_EMAILS) are read at RUNTIME and must only be passed with
-# `--env-file`/`-e` — `.env*` is excluded via .dockerignore, so no secret can be
-# baked into an image layer.
+# NEXT_PUBLIC_SITE_URL is inlined into the client bundle at BUILD time.
+# FIREBASE_WEB_API_KEY, the Admin SDK key, SMTP, and ADMIN_EMAILS are read at
+# RUNTIME only and must be passed with `--env-file`/`-e`. `.env*` is excluded
+# via .dockerignore, so those secrets are not baked into an image layer.
 
 # ---- build stage ----------------------------------------------------------
 FROM node:24-alpine AS builder
@@ -31,23 +25,12 @@ RUN npm ci
 
 COPY . .
 
-# Public config for the client bundle (build-time only).
-ARG NEXT_PUBLIC_FIREBASE_API_KEY=""
-ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
-ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID=""
-ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=""
-ARG NEXT_PUBLIC_FIREBASE_APP_ID=""
 ARG NEXT_PUBLIC_SITE_URL=""
-ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY} \
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN} \
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID} \
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID} \
-    NEXT_PUBLIC_FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID} \
-    NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
+ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 
 # VERCEL must be unset: it is what switches next.config.ts to the `.next`
 # (Vercel) branch, which produces no standalone bundle to run here.
-RUN [ -z "$VERCEL" ] || { echo "ERROR: VERCEL is set in the build environment; unset it to build the standalone/dist bundle"; exit 1; }
+RUN [ -z "$VERCEL" ] || { echo "ERROR: VERCEL is set in the build environment; unset it to build the standalone .next bundle"; exit 1; }
 RUN npm run build
 
 # ---- runtime stage --------------------------------------------------------
@@ -60,10 +43,10 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0
 
 # Traced standalone server + its own node_modules (no npm install at runtime).
-COPY --from=builder --chown=node:node /app/dist/standalone ./
+COPY --from=builder --chown=node:node /app/.next/standalone ./
 # next build leaves these two out of the standalone folder on purpose.
 COPY --from=builder --chown=node:node /app/public ./public
-COPY --from=builder --chown=node:node /app/dist/static ./dist/static
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
 USER node
 EXPOSE 3000

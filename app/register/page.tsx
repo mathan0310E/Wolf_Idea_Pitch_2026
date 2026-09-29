@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -574,13 +576,32 @@ function RegisterForm() {
             </div>
 
             <div className="p-6 rounded-xl bg-[#1E1E1E] border border-white/10 flex flex-col lg:flex-row items-center justify-between gap-8">
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-4 rounded-xl bg-white border-2 border-[#E50914] shadow-lg">
-                  <QRCodeSVG value={upiIntentUrl} size={180} />
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="flex flex-col items-center gap-3">
+                  <Image
+                    src="/qr/qr.jpeg"
+                    alt="UPI QR code for e-bookshp-programming@ybl"
+                    width={220}
+                    height={220}
+                    className="h-[180px] w-[180px] rounded-xl border-2 border-[#E50914] object-cover"
+                  />
+                  <span className="text-[11px] font-mono text-zinc-400">
+                    Scan with PhonePe, GPay, Paytm, BHIM
+                  </span>
                 </div>
-                <span className="text-[11px] font-mono text-zinc-400">
-                  Scan with GPay, PhonePe, Paytm, BHIM
-                </span>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="p-4 rounded-xl bg-white border-2 border-[#E50914] shadow-lg">
+                    <QRCodeCanvas
+                      value={upiIntentUrl}
+                      size={180}
+                      includeMargin={false}
+                      level="M"
+                    />
+                  </div>
+                  <span className="text-[11px] font-mono text-zinc-400">
+                    UPI canvas with {formatINR(totalFee)}
+                  </span>
+                </div>
               </div>
 
               <div className="flex-1 space-y-4 text-center lg:text-left">
@@ -678,9 +699,22 @@ function RegisterForm() {
                   onChange={(e) => setTermsAccepted(e.target.checked)}
                   className="mt-1 accent-[#E50914] w-4 h-4 rounded cursor-pointer"
                 />
-                <label htmlFor="terms" className="text-xs text-zinc-300 cursor-pointer select-none">
-                  I certify that all details provided are accurate, and I agree to the rules and payment verification policy of WOLF IDEA PITCH 2026.
-                </label>
+                <span className="text-xs text-zinc-300 select-none">
+                  <label htmlFor="terms" className="cursor-pointer">
+                    I certify that all details provided are accurate, and I agree to the event policy, privacy notice, and cookie notice.
+                  </label>{" "}
+                  <Link href="/policy" className="text-[#FF0007] underline underline-offset-2">
+                    Policy
+                  </Link>
+                  {" · "}
+                  <Link href="/privacy" className="text-[#FF0007] underline underline-offset-2">
+                    Privacy
+                  </Link>
+                  {" · "}
+                  <Link href="/cookies" className="text-[#FF0007] underline underline-offset-2">
+                    Cookies
+                  </Link>
+                </span>
               </div>
               {errors.termsAccepted && (
                 <p className="text-xs text-[#E50914] font-medium">⚠ {errors.termsAccepted}</p>

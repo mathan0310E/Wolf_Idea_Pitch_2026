@@ -1,31 +1,37 @@
 import type { Metadata, Viewport } from "next";
 import { Aleo, Host_Grotesk, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { CookieNotice } from "@/components/cookie-notice";
 import { PointerMotion } from "@/components/pointer-motion";
 import { ScrollProgress } from "@/components/scroll-progress";
 import "./globals.css";
 
 const displayFont = Aleo({
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
-  variable: "--font-display",
+  weight: ["400", "700"],
+  variable: "--font-aleo",
+  display: "swap",
 });
 
 const bodyFont = Host_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
+  variable: "--font-host",
+  display: "swap",
 });
 
 const serifFont = Instrument_Serif({
   subsets: ["latin"],
-  weight: ["400"],
+  weight: "400",
   style: ["normal", "italic"],
-  variable: "--font-serif",
+  variable: "--font-instrument",
+  display: "swap",
 });
 
 const monoFont = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  weight: ["400", "700"],
+  variable: "--font-jetbrains",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -101,7 +107,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${displayFont.variable} ${bodyFont.variable} ${serifFont.variable} ${monoFont.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0A0A0A] text-white font-sans selection:bg-[#E50914] selection:text-white">
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-[#0A0A0A] text-white font-sans selection:bg-[#E50914] selection:text-white"
+      >
         {/* Enable the motion styles on <html> before first paint so entrance
             animations can never cause a flash of fully-visible content that
             then jumps back to hidden. Use a <template> wrapper because React
@@ -121,6 +130,7 @@ export default function RootLayout({
             custom properties for surfaces already on the page. */}
         <PointerMotion />
         {children}
+        <CookieNotice />
       </body>
     </html>
   );

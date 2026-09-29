@@ -16,12 +16,10 @@ if (getApps().length) {
       ? process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, "\n")
       : undefined;
     const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-    const projectId =
-      process.env.FIREBASE_ADMIN_PROJECT_ID ||
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID?.trim();
     if (!projectId) {
       throw new Error(
-        "[FATAL CONFIG] Firebase Admin project ID is missing. Set FIREBASE_ADMIN_PROJECT_ID in .env.local."
+        "[FATAL CONFIG] Firebase Admin project ID is missing. Set FIREBASE_ADMIN_PROJECT_ID in .env."
       );
     }
 

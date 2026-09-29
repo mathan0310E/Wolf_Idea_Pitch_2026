@@ -74,7 +74,6 @@ export function Navbar() {
               width={44}
               height={44}
               className="w-full h-full object-contain rounded-full"
-              priority
             />
           </div>
           <div className="flex flex-col min-w-0">

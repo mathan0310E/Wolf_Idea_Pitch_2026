@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { AuditLog } from "@/lib/types"
+import { adminHref } from "@/lib/admin-path"
 
 function adminToken(): string | null {
   try {
@@ -27,7 +28,7 @@ export default function AuditLogsPage() {
   React.useEffect(() => {
     const token = adminToken()
     if (!token) {
-      router.push("/admin/login")
+      router.push(adminHref("/login"))
       return
     }
 
@@ -42,7 +43,7 @@ export default function AuditLogsPage() {
       .then(async (res) => {
         if (res.status === 401 || res.status === 403) {
           sessionStorage.removeItem("wolf_admin_session")
-          router.push("/admin/login")
+          router.push(adminHref("/login"))
           return
         }
         if (!res.ok) {

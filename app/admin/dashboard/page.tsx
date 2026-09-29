@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatINR, teamTypeLabel } from "@/config/event";
 import { Registration } from "@/lib/types";
+import { adminHref } from "@/lib/admin-path";
 
 function adminToken(): string | null {
   try {
@@ -36,7 +37,7 @@ export default function AdminDashboardPage() {
   React.useEffect(() => {
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
 
@@ -47,7 +48,7 @@ export default function AdminDashboardPage() {
         });
         if (res.status === 401 || res.status === 403) {
           sessionStorage.removeItem("wolf_admin_session");
-          router.push("/admin/login");
+          router.push(adminHref("/login"));
           return;
         }
         const data = await res.json();
@@ -65,7 +66,7 @@ export default function AdminDashboardPage() {
   const handleExport = async () => {
     const token = adminToken();
     if (!token) {
-      router.push("/admin/login");
+      router.push(adminHref("/login"));
       return;
     }
     const res = await fetch("/api/admin/export", {
@@ -178,7 +179,7 @@ export default function AdminDashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-xl font-bold text-white">Recent Registrations</h2>
-            <Link href="/admin/registrations" className="text-xs text-[#E50914] hover:underline font-bold">
+            <Link href={adminHref("/registrations")} className="text-xs text-[#E50914] hover:underline font-bold">
               View All Registrations →
             </Link>
           </div>
@@ -220,7 +221,7 @@ export default function AdminDashboardPage() {
                       <td className="p-4 text-zinc-400">{reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : "—"}</td>
                       <td className="p-4">
                         <Link
-                          href={`/admin/registrations`}
+                          href={adminHref("/registrations")}
                           className="px-3 py-1 rounded bg-[#1E1E1E] hover:bg-white/10 text-white font-medium border border-white/10"
                         >
                           Manage

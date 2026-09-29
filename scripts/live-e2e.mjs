@@ -8,7 +8,7 @@
  * with the Admin SDK. Writes exactly ONE test registration + its payment doc,
  * then rejects it (leaving a clean audit trail).
  *
- * Run: node --env-file=.env.local scripts/live-e2e.mjs [baseUrl]
+ * Run: node --env-file=.env scripts/live-e2e.mjs [baseUrl]
  *
  * Prints NO secrets: no private key, no ID token, no OTP code (masked), no
  * lookup token (masked), no screenshot data.
@@ -64,12 +64,12 @@ const isGateRedirect = (r) =>
 const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
 const privateKey = (process.env.FIREBASE_ADMIN_PRIVATE_KEY || "").replace(/\\n/g, "\n");
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const apiKey = process.env.FIREBASE_WEB_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 const allowlist = (process.env.ADMIN_EMAILS || "")
   .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 
 if (!projectId || !clientEmail || !privateKey || !apiKey) {
-  console.error("Missing env. Run with: node --env-file=.env.local scripts/live-e2e.mjs");
+  console.error("Missing env. Run with: node --env-file=.env scripts/live-e2e.mjs");
   process.exit(1);
 }
 initializeApp({ credential: cert({ projectId, clientEmail, privateKey }), projectId });

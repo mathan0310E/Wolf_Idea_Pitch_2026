@@ -1,13 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { clearAdminGateCookie } from "@/lib/admin-session";
+import { requireAdmin } from "@/lib/admin-auth";
+import { writeAuditLog } from "@/lib/admin-audit";
 
 /**
  * POST /api/admin/logout — drops the signed page-gate cookie.
  *
- * Deliberately unauthenticated: clearing a cookie grants nothing, and the
- * Firebase client session in sessionStorage is destroyed by the caller. Every
- * /api/admin/* data route stays protected by requireAdmin() regardless.
+ * Clearing a cookie grants nothing. When the caller still holds a valid
+ * admin session, the sign-out is written to the audit log. The cookie is
+ * cleared either way.
  */
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!("error" in auth)) {
+    try {
+      await writeAuditLog({
+        actorUid: auth.admin.uid,
+        action: "ADMIN_LOGOUT",
+        targetId: "session",
+      });
+    } catch (error) {
+      console.error("Logout audit write failed:", error);
+    }
+  }
   return clearAdminGateCookie(NextResponse.json({ ok: true }));
 }
