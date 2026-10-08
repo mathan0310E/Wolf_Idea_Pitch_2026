@@ -580,7 +580,7 @@ function RegisterForm() {
                 <div className="flex flex-col items-center gap-3">
                   <Image
                     src="/qr/qr.jpeg"
-                    alt="UPI QR code for e-bookshp-programming@ybl"
+                    alt={`UPI QR code for ${event.payment.upiId}`}
                     width={220}
                     height={220}
                     className="h-[180px] w-[180px] rounded-xl border-2 border-[#E50914] object-cover"

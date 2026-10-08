@@ -70,8 +70,8 @@ export const event = {
   },
   payment: {
     // UPI ID shown on the payment step, the canvas QR, and the pay link.
-    upiId: "e-bookshp-programming@ybl",
-    beneficiaryName: "TAMILSELVAN S",
+    upiId: "lakshusha2007@okicici",
+    beneficiaryName: "Lakshmanan R",
     currency: "INR",
   },
   registration: {
